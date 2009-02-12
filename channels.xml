@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<stations>
+	<channel>
+		<name> </name>
+		<vdrchannelid>S19.2E-1-1089-12003</vdrchannelid>
+		<epgdatacomid>38</epgdatacomid>
+		<xmltvid>rtl.de</xmltvid>
+	</channel>
+        <channel>
+		<name> </name>
+                <vdrchannelid>S19.2E-1-1107-17500</vdrchannelid>
+                <epgdatacomid>39</epgdatacomid>
+                <xmltvid>sat1.de</xmltvid>
+        </channel>
+        <channel>
+		<name> </name>
+                <vdrchannelid>S19.2E-1-1082-20005</vdrchannelid>
+                <epgdatacomid>39</epgdatacomid>
+                <xmltvid>sat1-austria.de</xmltvid>
+        </channel>
+        <channel>
+		<name> </name>
+                <vdrchannelid>S19.2E-133-7-48</vdrchannelid>
+                <epgdatacomid>39</epgdatacomid>
+                <xmltvid>sat1-schweiz.de</xmltvid>
+        </channel>
+</stations>
