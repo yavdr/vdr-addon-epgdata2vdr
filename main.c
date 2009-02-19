@@ -162,19 +162,25 @@ void endElement(void *user_data, const xmlChar *name)
   }
   else if (!strcmp(name, "data"))
   {
-    printf("broadcast_id: %d\n", pud->broadcast_id);
-    printf("tvshow_id: %d\n", pud->tvshow_id);
-    printf("tvchannel_id: %d\n", pud->tvchannel_id);
-    printf("title: %s\n", pud->title);
-    printf("comment_long: %s\n", pud->comment_long);
-    printf("comment_short: %s\n", pud->comment_short);
-    printf("starttime: %s", ctime(&pud->starttime));
-    printf("vps: %s", pud->vps ? ctime(&pud->vps) : "\n");
-    printf("tvshow_length: %d\n", pud->tvshow_length);
-    printf("\n");
+    printf("C %d\n", pud->tvchannel_id);
+    printf("E %d %d %d 50\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
+    printf("T %s\n", pud->title);
+    printf("S %s\n", pud->comment_short);
+    printf("D %s\n", pud->comment_long);
+    if (pud->vps)
+    {
+      printf("V %d\n", pud->vps);
+    }
+    printf("e\n");
+    printf("c\n");
+
+//    printf("tvshow_id: %d\n", pud->tvshow_id);
     free(pud->title);
+    pud->title = NULL;
     free(pud->comment_long);
+    pud->comment_long = NULL;
     free(pud->comment_short);
+    pud->comment_short = NULL;
   }
   pud->index = 0;
 }
