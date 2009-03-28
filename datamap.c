@@ -59,23 +59,23 @@ void cDataMap::processData(xmlTextReaderPtr reader)
 {
 	// element callback from read_xmlfile
 	// args:	pointer to the xmlTextreader
-	xmlChar *value;
-    char *name = (char *)xmlTextReaderConstName(reader);
+	string value;
+    string name = string((char *)xmlTextReaderConstName(reader));
 	int type = xmlTextReaderNodeType(reader) ;
 	int depth = xmlTextReaderDepth(reader) ;
 	int retval;
 	int epgdataid;
 
-	if (type == XML_READER_TYPE_ELEMENT && depth == 2 && (!strcmp( name,"ca0")||!strcmp( name,"g0"))) {
+	if (type == XML_READER_TYPE_ELEMENT && depth == 2 && (name.compare("ca0")||name.compare("g0"))) {
 		epgdataid = atol((char *)xmlXPathCastNodeToString(xmlTextReaderExpand(reader))); 
 		retval = xmlTextReaderNext(reader); // end element 
 		retval = xmlTextReaderNext(reader); // start element next
-		value = xmlXPathCastNodeToString(xmlTextReaderExpand(reader));
-		datamap[epgdataid]  = (char *)value;
+		value = string((char *)xmlXPathCastNodeToString(xmlTextReaderExpand(reader)));
+		datamap[epgdataid]  = value;
 	}
 }
 
-char* cDataMap::GetStr(int dataid)
+string cDataMap::GetStr(int dataid)
 {
 	return datamap[dataid];
 }

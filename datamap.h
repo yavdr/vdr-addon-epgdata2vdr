@@ -16,8 +16,9 @@
 #include <libxml/xmlstring.h>
 #include <libxml/xpath.h>
 
+using namespace std; 
 
-typedef std::map<int, char *> cDMap;
+typedef map<int, string> cDMap;
 
 class cDataMap {
 private:
@@ -27,7 +28,7 @@ public:
   cDataMap();
   ~cDataMap();
   cDMap datamap;
-  char* GetStr(int dataid);
+  string GetStr(int dataid);
 };
 
 #endif

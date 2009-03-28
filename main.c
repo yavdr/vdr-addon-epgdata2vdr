@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <time.h>
 #include <zip.h>
 #include <libxml/xmlreader.h>
@@ -8,6 +9,8 @@
 #include "channelmap.h"
 #include "datamap.h"
 
+using namespace std;
+
 typedef struct {
   // channelmapping 
   char *name;
@@ -15,42 +18,42 @@ typedef struct {
   cDataMap *datamap;
   int chanindex;
   
-  // data
-  int broadcast_id;
-  int tvshow_id;
-  int tvchannel_id;
-  time_t starttime;
-  time_t vps;
-  int tvshow_length;
-  xmlChar *primetime ; 		
-  xmlChar *category ; 		
-  xmlChar *technics_bw;
-  xmlChar *technics_co_channel;
-  xmlChar *technics_vt150;
-  xmlChar *technics_coded;
-  xmlChar *technics_blind;
-  xmlChar *age_marker;
-  xmlChar *live;
-  xmlChar *tip;
-  xmlChar *title;
-  xmlChar *subtitle;
-  xmlChar *comment_long;
-  xmlChar *comment_middle;
-  xmlChar *comment_short;
-  xmlChar *themes;
-  xmlChar *genre;
-  xmlChar *sequence;
-  xmlChar *technics_stereo;
-  xmlChar *technics_dolby;
-  xmlChar *technics_wide;
-  xmlChar *stars;
-  xmlChar *attribute;
-  xmlChar *country;
-  xmlChar *moderator;
-  xmlChar *year;
-  xmlChar *studio_guest;
-  xmlChar *regisseur;
-  xmlChar *actor;
+// data
+	int broadcast_id;
+	int tvshow_id;
+	int tvchannel_id;
+	time_t starttime;
+	time_t vps;
+	int tvshow_length;
+	string primetime ; 		
+	string category ;
+	string genre;
+	xmlChar *technics_bw;
+	xmlChar *technics_co_channel;
+	xmlChar *technics_vt150;
+	xmlChar *technics_coded;
+	xmlChar *technics_blind;
+	xmlChar *age_marker;
+	xmlChar *live;
+	xmlChar *tip;
+	xmlChar *title;
+	xmlChar *subtitle;
+	xmlChar *comment_long;
+	xmlChar *comment_middle;
+	xmlChar *comment_short;
+	xmlChar *themes;
+	xmlChar *sequence;
+	xmlChar *technics_stereo;
+	xmlChar *technics_dolby;
+	xmlChar *technics_wide;
+	xmlChar *stars;
+	xmlChar *attribute;
+	xmlChar *country;
+	xmlChar *moderator;
+	xmlChar *year;
+	xmlChar *studio_guest;
+	xmlChar *regisseur;
+	xmlChar *actor;
 } UserData, * UserDataPtr;
 
 static void processNode(xmlTextReaderPtr reader, void *user_data) 
@@ -82,7 +85,7 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 	     	&tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
 	    	tm.tm_year -= 1900;
 	    	tm.tm_mon -= 1; 
-	    	tm.tm_isdst = -1;
+	    	//tm.tm_isdst = -1;
 	    	pud->starttime = mktime(&tm);
 	    	pud->starttime -= tm.tm_gmtoff;
 		}
@@ -106,13 +109,13 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		}
 		else if (!strcmp(name,"d9"))
 		{
-			if (atol((char *)value)) pud->primetime = xmlCharStrdup("PrimeTime");
-								else pud->primetime = xmlCharStrdup("");
+			if (atol((char *)value)) pud->primetime = string("|PrimeTime");
+								else pud->primetime = string("");
 		}
 		else if (!strcmp(name,"d10"))
 		{
-			if (atol((char *)value)) pud->category = xmlStrdup((xmlChar *)pud->datamap->GetStr(atol((char *)value)));
-								else pud->category = xmlCharStrdup("");
+			if (atol((char *)value)) pud->category = pud->datamap->GetStr(atol((char *)value));
+								else pud->category = string("");
 		}
 		else if (!strcmp(name,"d11"))
 		{
@@ -156,8 +159,8 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 			switch(atol((char *)value))
 			{
 				case 0: pud->live = xmlCharStrdup("");				break;
-				case 1: pud->live = xmlCharStrdup("Live");			break;
-				case 2:	pud->live = xmlCharStrdup("Wiederholung");	break;
+				case 1: pud->live = xmlCharStrdup("|Live");			break;
+				case 2:	pud->live = xmlCharStrdup("|Wiederholung");	break;
 				default:
 					pud->live = xmlCharStrdup("") ;
 					fprintf(stderr, 
@@ -183,12 +186,24 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		else if (!strcmp(name,"d21")) pud->comment_long = xmlStrdup(value);
 		else if (!strcmp(name,"d22")) pud->comment_middle = xmlStrdup(value);
 		else if (!strcmp(name,"d23")) pud->comment_short = xmlStrdup(value);
-		else if (!strcmp(name,"d24")) pud->themes = xmlStrdup(value);
+		else if (!strcmp(name,"d24"))  {
+			if (xmlStrlen(value)) {
+				pud->themes = xmlCharStrdup("|");
+				pud->themes = xmlStrcat(pud->themes,value);
+			}
+			else pud->sequence = xmlCharStrdup("");
+		}		
 		else if (!strcmp(name,"d25")) {
-			 if (atol((char *)value)) pud->genre = xmlStrdup((xmlChar *)pud->datamap->GetStr(atol((char *)value)));
-								 else pud->genre = xmlCharStrdup("");
+			 if (atol((char *)value)) pud->genre = pud->datamap->GetStr(atol((char *)value));
+								 else pud->genre = string("");
 		}
-		else if (!strcmp(name,"d26")) pud->sequence = xmlStrdup(value);
+		else if (!strcmp(name,"d26"))  {
+			if (xmlStrlen(value)) {
+				pud->sequence = xmlCharStrdup("|Folge: ");
+				pud->sequence = xmlStrcat(pud->sequence,value);
+			}
+			else pud->sequence = xmlCharStrdup("");
+		}		
 		else if (!strcmp(name,"d27")) {
 			if (atol((char *)value)) pud->technics_stereo = xmlCharStrdup("Stereo,");
 								else pud->technics_stereo = xmlCharStrdup("");
@@ -204,11 +219,11 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		else if (!strcmp(name,"d30")) {
 			switch(atol((char *)value))	{
 				case 0: pud->stars =  xmlCharStrdup("");		break;
-				case 1: pud->stars =  xmlCharStrdup("[*----]");	break;
-				case 2: pud->stars =  xmlCharStrdup("[**---]");	break;
-				case 3: pud->stars =  xmlCharStrdup("[***--]");	break;
-				case 4:	pud->stars =  xmlCharStrdup("[****-]"); break;
-				case 5:	pud->stars =  xmlCharStrdup("[*****]");	break;
+				case 1: pud->stars =  xmlCharStrdup("[*----] ");	break;
+				case 2: pud->stars =  xmlCharStrdup("[**---] ");	break;
+				case 3: pud->stars =  xmlCharStrdup("[***--] ");	break;
+				case 4:	pud->stars =  xmlCharStrdup("[****-] "); break;
+				case 5:	pud->stars =  xmlCharStrdup("[*****] ");	break;
 				default: 
 					pud->stars =  	  xmlCharStrdup("");
 					fprintf(stderr, "unknown rating: %d !\n", atol((char *)value));
@@ -270,12 +285,12 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 	}
 	else if (type == 15 && depth == 1)
 	{
-		// One event finished, output the event
+		// One event finished (data end tag reached), lets print the event!
 		//
-		// C: channelid channelname
-		// S19.2E-1-1101-28106 Das Erste
 		for (pud->chanindex = 0; pud->chanindex < pud->chanmap->GetChanCnt(pud->tvchannel_id); pud->chanindex++)
 		{
+			// C: channelid channelname
+			// S19.2E-1-1101-28106 Das Erste
 			printf("C %s\n", pud->chanmap->GetChanStr(pud->tvchannel_id, pud->chanindex) );  
 			
 			// E: eventid starttime(unixdate) duration 0 0 
@@ -290,20 +305,33 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 			
 			//main text
 			printf("D ");
+			printf("%s",pud->stars);
 			printf("%s",pud->tip); 
 			printf("%s|", pud->comment_long);
-			printf("%s - %s",pud->category, pud->genre);
-			printf("%s",pud->primetime);
+			printf("%s - %s",pud->category.c_str(), pud->genre.c_str());
+			printf("%s",pud->primetime.c_str());
+			printf("%s",pud->sequence);
+			
 			printf("%s",pud->technics_bw);
 			printf("%s",pud->technics_co_channel);
 			printf("%s",pud->technics_vt150);
 			printf("%s",pud->technics_coded);
 			printf("%s",pud->technics_blind);
+			printf("%s",pud->technics_stereo);
+			printf("%s",pud->technics_dolby);
+			printf("%s",pud->technics_wide);
+			
 			printf("%s",pud->age_marker);
+			printf("%s",pud->live);
+			printf("%s",pud->attribute);
+			printf("%s",pud->country);
+			printf("%s",pud->year);
 			printf("%s",pud->themes);
-			printf("%s",pud->sequence);
-			// add some more in here 
-			printf("\n"); // end of D section, line breaks are '|' (pipe) in here !
+			printf("%s",pud->moderator);
+			printf("%s",pud->studio_guest);
+			printf("%s",pud->regisseur);
+			printf("%s",pud->actor);
+			printf("\n"); // end of D (main information section, line breaks are '|' (pipe) in here !
 			if (pud->vps)
 			{
 				printf("V %d\n", pud->vps);
@@ -315,8 +343,8 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		}
 		
 		// cleanup for next element
-		free(pud->primetime);			pud->primetime = NULL ;
-		free(pud->category);			pud->category = NULL;
+	//	free(pud->primetime);			pud->primetime = NULL ;
+	//	free(pud->category);			pud->category = NULL;
 		free(pud->technics_bw);			pud->technics_bw = NULL;
 		free(pud->technics_co_channel);	pud->technics_co_channel = NULL;
 		free(pud->technics_vt150);		pud->technics_vt150 =NULL;
@@ -331,7 +359,6 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		free(pud->comment_middle);		pud->comment_middle = NULL;
 		free(pud->comment_short);		pud->comment_short = NULL;
 		free(pud->themes);				pud->themes = NULL;
-		free(pud->genre);				pud->genre = NULL;
 		free(pud->sequence);			pud->sequence = NULL;
 		free(pud->stars);				pud->stars = NULL;
 		free(pud->attribute);			pud->attribute = NULL;
@@ -353,6 +380,8 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 
 int main(int argc, char *argv[])
 {
+
+// Move unzip and process to process.c|h and into seperate function/class !!!
   struct zip *pzip;
   int num_files;
   int zipfilenum;
@@ -405,7 +434,10 @@ int main(int argc, char *argv[])
 	  len = zip_fread(zfile, buffer, zstat.size);
 	  // initialize & test Parserlib
 	  LIBXML_TEST_VERSION
-	  reader = xmlReaderForMemory(buffer, zstat.size,"/usr/src/epgdata2vdr/epgdata2vdr/","iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
+	  // make sure that all necessary file are in the folder
+	  // qy.dtd, category.xml, genre.xml
+	  // move directory definition elsewhere
+	  reader = xmlReaderForMemory(buffer, zstat.size,"/root/test1/include/","iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
 		if (reader != NULL)	{
 	        parseretval = xmlTextReaderRead(reader);
 	        while (parseretval == 1) {
