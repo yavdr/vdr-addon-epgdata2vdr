@@ -161,6 +161,7 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 				case 0: pud->live = xmlCharStrdup("");				break;
 				case 1: pud->live = xmlCharStrdup("|Live");			break;
 				case 2:	pud->live = xmlCharStrdup("|Wiederholung");	break;
+				case 3: pud->live = xmlCharStrdup("|Zeitversetzte Übertragung");	break;
 				default:
 					pud->live = xmlCharStrdup("") ;
 					fprintf(stderr, 
