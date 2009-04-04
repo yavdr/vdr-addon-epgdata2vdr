@@ -60,7 +60,6 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 {
   UserDataPtr pud = (UserDataPtr)user_data; 
   struct tm tm;
-  char *tzname[2] = {"CEST", "CET"};    tzset(); // content is assumed to be CET/CEST
   char *name = (char *)xmlTextReaderConstName(reader);
   const xmlChar *value;
   
@@ -83,8 +82,9 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 	     	&tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
 	    	tm.tm_year -= 1900;
 	    	tm.tm_mon -= 1; 
-	    	tm.tm_isdst = -1 ; // determine DST based on the time and locale (set earlier)
-	    	pud->starttime = mktime(&tm); //time_t as out of mktime is UTC ?!?!
+			tm.tm_zone = strdup("CET"); // assume date in XML to be CET
+	    	tm.tm_isdst = -1 ; // determine DST based on the time and locale 
+	    	pud->starttime = mktime(&tm); //time_t as out of mktime is UTC on Linux
 		}
 		else if (!strcmp(name,"d7")) pud->tvshow_length = atol((char *)value) * 60;
 		else if (!strcmp(name,"d8")) { // VPS
