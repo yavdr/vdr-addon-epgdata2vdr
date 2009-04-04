@@ -12,7 +12,7 @@
 using namespace std;
 
 typedef struct {
-  // channelmapping 
+// mapping of external data
   char *name;
   cChannelMap *chanmap;
   cDataMap *datamap;
@@ -60,6 +60,7 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 {
   UserDataPtr pud = (UserDataPtr)user_data; 
   struct tm tm;
+  char *tzname[2] = {"CEST", "CET"};    tzset(); // content is assumed to be CET/CEST
   char *name = (char *)xmlTextReaderConstName(reader);
   const xmlChar *value;
   
@@ -69,95 +70,69 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 
   if (type == XML_READER_TYPE_ELEMENT && depth == 2)
 	{
-		value = xmlXPathCastNodeToString(xmlTextReaderExpand(reader)); 
+		value = xmlXPathCastNodeToString(xmlTextReaderExpand(reader)); // get the content and ...
 		retval = xmlTextReaderNext(reader); // move to closing tag on same level, we don't need to go deeper
 		
-		// Parse the elements and put it into the struct
+		// decide where to put the value
 		//     
-		if (!strcmp(name,"d0"))	pud->broadcast_id = atol((char *)value);
-	    else if (!strcmp(name,"d1")) pud->tvshow_id = atol((char *)value);
-		else if (!strcmp(name,"d2")) pud->tvchannel_id = atol((char *)value);
-		// d3 -  tvregionid
-	    else if (!strcmp(name,"d4"))
-		{
-			// starttime
+		if 		(!strcmp(name,"d0")) pud->broadcast_id = atol((char *)value);
+		else if (!strcmp(name,"d1")) pud->tvshow_id = atol((char *)value);
+		else if (!strcmp(name,"d2")) pud->tvchannel_id = atol((char *)value); // d3 -  tvregionid not required
+		else if (!strcmp(name,"d4")) {	// starttime -  next would be  d5,d6: endtime, broadcast_day not required
 	    	sscanf((char *)value, "%04d-%02d-%02d %02d:%02d:%02d", &tm.tm_year, 
 	     	&tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
 	    	tm.tm_year -= 1900;
 	    	tm.tm_mon -= 1; 
-	    	//tm.tm_isdst = -1;
-	    	pud->starttime = mktime(&tm);
-	    	pud->starttime -= tm.tm_gmtoff;
+	    	tm.tm_isdst = -1 ; // determine DST based on the time and locale (set earlier)
+	    	pud->starttime = mktime(&tm); //time_t as out of mktime is UTC ?!?!
 		}
-		//  d5,d6 ???	endtime, broadcast_day not required
-	    else if (!strcmp(name,"d7")) pud->tvshow_length = atol((char *)value) * 60;
-		else if (!strcmp(name,"d8"))
-		{
-			// vps
-			if (strlen((char *)value) == 5)
-			{
+		else if (!strcmp(name,"d7")) pud->tvshow_length = atol((char *)value) * 60;
+		else if (!strcmp(name,"d8")) { // VPS
+			if (strlen((char *)value) == 5) {
 			  gmtime_r(&pud->starttime, &tm);
 			  sscanf((char *)value, "%02d:%02d", &tm.tm_hour, &tm.tm_min);
 			  tm.tm_sec = 0;
 			  pud->vps = mktime(&tm);
-			  pud->vps -= tm.tm_gmtoff;
 			}
-			else
-			{
-			  pud->vps = 0;
-			}
+			else pud->vps = 0;
 		}
-		else if (!strcmp(name,"d9"))
-		{
+		else if (!strcmp(name,"d9")) {
 			if (atol((char *)value)) pud->primetime = string("|PrimeTime");
 								else pud->primetime = string("");
 		}
-		else if (!strcmp(name,"d10"))
-		{
+		else if (!strcmp(name,"d10")) {
 			if (atol((char *)value)) pud->category = pud->datamap->GetStr(atol((char *)value));
 								else pud->category = string("");
 		}
-		else if (!strcmp(name,"d11"))
-		{
+		else if (!strcmp(name,"d11")) {
 			if (atol((char *)value)) pud->technics_bw = xmlCharStrdup("Schwarz Weiß,");
 								else pud->technics_bw = xmlCharStrdup("");
 		}
-		else if (!strcmp(name,"d12"))
-		{
+		else if (!strcmp(name,"d12")) {
 			if (atol((char *)value)) pud->technics_co_channel = xmlCharStrdup("Zweikanalton,");
 								else pud->technics_co_channel = xmlCharStrdup("");
 		}
-		else if (!strcmp(name,"d13"))
-		{
+		else if (!strcmp(name,"d13")) {
 			if (atol((char *)value)) pud->technics_vt150 = xmlCharStrdup("Untertitel,");
 								else pud->technics_vt150 = xmlCharStrdup("");
 		}
-		else if (!strcmp(name,"d14"))
-		{
+		else if (!strcmp(name,"d14")) {
 			if (atol((char *)value)) pud->technics_coded = xmlCharStrdup("PayTV,");
 								else pud->technics_coded = xmlCharStrdup("");
 		}
-		else if (!strcmp(name,"d15"))
-		{
+		else if (!strcmp(name,"d15")) {
 			if (atol((char *)value)) pud->technics_blind = xmlCharStrdup("Hörfilm,");
 								else pud->technics_blind = xmlCharStrdup("");
 		}
-		else if (!strcmp(name,"d16"))
-		{
-			if (strlen((char *)value))
-			{
+		else if (!strcmp(name,"d16")) {
+			if (strlen((char *)value)) {
 				pud->age_marker = xmlCharStrdup("|FSK: ");
 				xmlStrcat(pud->age_marker, value); 
 			}
-			else 
-			{
-				pud->age_marker = xmlCharStrdup("");
-			}
+			else pud->age_marker = xmlCharStrdup("");
 		}
-		else if (!strcmp(name,"d17"))
-		{
-			switch(atol((char *)value))
-			{
+		else if (!strcmp(name,"d17")) {
+			switch(atol((char *)value)) {
 				case 0: pud->live = xmlCharStrdup("");				break;
 				case 1: pud->live = xmlCharStrdup("|Live");			break;
 				case 2:	pud->live = xmlCharStrdup("|Wiederholung");	break;
@@ -169,10 +144,8 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 							atol((char *)value));
 			}
 		}
-		else if (!strcmp(name,"d18"))
-		{
-			switch(atol((char *)value))
-			{
+		else if (!strcmp(name,"d18")) {
+			switch(atol((char *)value)) {
 				case 0: pud->tip = xmlCharStrdup(""); 				break;
 				case 1: pud->tip = xmlCharStrdup("[Spartentipp]");	break;
 				case 2:	pud->tip = xmlCharStrdup("[Genretipp]");	break;
@@ -187,18 +160,18 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		else if (!strcmp(name,"d21")) pud->comment_long = xmlStrdup(value);
 		else if (!strcmp(name,"d22")) pud->comment_middle = xmlStrdup(value);
 		else if (!strcmp(name,"d23")) pud->comment_short = xmlStrdup(value);
-		else if (!strcmp(name,"d24"))  {
+		else if (!strcmp(name,"d24")) {
 			if (xmlStrlen(value)) {
 				pud->themes = xmlCharStrdup("|");
 				pud->themes = xmlStrcat(pud->themes,value);
 			}
-			else pud->sequence = xmlCharStrdup("");
+			else pud->themes = xmlCharStrdup("");
 		}		
 		else if (!strcmp(name,"d25")) {
 			 if (atol((char *)value)) pud->genre = pud->datamap->GetStr(atol((char *)value));
 								 else pud->genre = string("");
 		}
-		else if (!strcmp(name,"d26"))  {
+		else if (!strcmp(name,"d26")) {
 			if (xmlStrlen(value)) {
 				pud->sequence = xmlCharStrdup("|Folge: ");
 				pud->sequence = xmlStrcat(pud->sequence,value);
@@ -219,11 +192,11 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		}		
 		else if (!strcmp(name,"d30")) {
 			switch(atol((char *)value))	{
-				case 0: pud->stars =  xmlCharStrdup("");		break;
+				case 0: pud->stars =  xmlCharStrdup("");			break;
 				case 1: pud->stars =  xmlCharStrdup("[*----] ");	break;
 				case 2: pud->stars =  xmlCharStrdup("[**---] ");	break;
 				case 3: pud->stars =  xmlCharStrdup("[***--] ");	break;
-				case 4:	pud->stars =  xmlCharStrdup("[****-] "); break;
+				case 4:	pud->stars =  xmlCharStrdup("[****-] "); 	break;
 				case 5:	pud->stars =  xmlCharStrdup("[*****] ");	break;
 				default: 
 					pud->stars =  	  xmlCharStrdup("");
@@ -344,8 +317,6 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		}
 		
 		// cleanup for next element
-	//	free(pud->primetime);			pud->primetime = NULL ;
-	//	free(pud->category);			pud->category = NULL;
 		free(pud->technics_bw);			pud->technics_bw = NULL;
 		free(pud->technics_co_channel);	pud->technics_co_channel = NULL;
 		free(pud->technics_vt150);		pud->technics_vt150 =NULL;
