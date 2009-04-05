@@ -75,7 +75,7 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		
 		// decide where to put the value
 		//     
-		if 		(!strcmp(name,"d0")) pud->broadcast_id = atol((char *)value);
+		if (!strcmp(name,"d0")) pud->broadcast_id = atol((char *)value);
 		else if (!strcmp(name,"d1")) pud->tvshow_id = atol((char *)value);
 		else if (!strcmp(name,"d2")) pud->tvchannel_id = atol((char *)value); 
 		else if (!strcmp(name,"d3")) pud->regional = atol((char *)value);
