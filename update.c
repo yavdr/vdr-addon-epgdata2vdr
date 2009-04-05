@@ -11,8 +11,8 @@ using namespace std;
 cProcessEpg::cProcessEpg()
 {
 	UserDataPtr user_data;  
-	user_data.chanmap = new cChannelMap;
-	user_data.datamap = new cDataMap;
+	user_data->chanmap = new cChannelMap;
+	user_data->datamap = new cDataMap;
 }
 
 cProcessEpg::~cProcessEpg()
