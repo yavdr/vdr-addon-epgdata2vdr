@@ -20,7 +20,7 @@ cProcessEpg::~cProcessEpg()
 
 }
 
-static void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data) 
+void cProcessEpg::processNode(xmlTextReaderPtr reader, UserDataPtr &user_data) 
 {
 	UserDataPtr pud = user_data; 
 	struct tm tm;
@@ -105,7 +105,7 @@ static void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 				default:
 					pud->live = xmlCharStrdup("") ;
 					fprintf(stderr, 
-							"unknown live_id: %d !\n", 
+							"unknown live_id: %ld !\n", 
 							atol((char *)value));
 			}
 		}
@@ -117,7 +117,7 @@ static void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 				case 3:	pud->tip = xmlCharStrdup("[Tagestipp]");	break;
 				default: 
 					pud->tip = xmlCharStrdup("");
-					fprintf(stderr, "unknown tipflag: %d !\n", atol((char *)value));
+					fprintf(stderr, "unknown tipflag: %ld !\n", atol((char *)value));
 			}
 		}
 		else if (!strcmp(name,"d19")) pud->title = xmlStrdup(value);
@@ -165,7 +165,7 @@ static void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 				case 5:	pud->stars =  xmlCharStrdup("[*****] ");	break;
 				default: 
 					pud->stars =  	  xmlCharStrdup("");
-					fprintf(stderr, "unknown rating: %d !\n", atol((char *)value));
+					fprintf(stderr, "unknown rating: %ld !\n", atol((char *)value));
 			}
 		} 
 		else if (!strcmp(name,"d31")) {
@@ -235,7 +235,7 @@ static void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 				
 				// E: eventid starttime(unixdate) duration 0 0 
 				// 37237569 1236067500 3000 0 0
-				printf("E %d %d %d 50\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
+				printf("E %d %ld %d 50\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
 				
 				//T: title 
 				printf("T %s\n", pud->title);
@@ -274,7 +274,7 @@ static void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 				printf("\n"); // end of D (main information section, line breaks are '|' (pipe) in here !
 				if (pud->vps)
 				{
-					printf("V %d\n", pud->vps);
+					printf("V %ld\n", pud->vps);
 				}
 				
 				// end event and channel
@@ -317,7 +317,7 @@ static void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 
 
 
-int processFile(UserDataPtr userdata, char *filename)
+int cProcessEpg::processFile(UserDataPtr userdata, char *filename)
 {
   struct zip *pzip;
   int num_files;

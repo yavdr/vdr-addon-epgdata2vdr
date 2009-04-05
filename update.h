@@ -69,7 +69,7 @@ using namespace std;
 
 class cProcessEpg {
 private:
-	void processNode(xmlTextReaderPtr reader);
+	void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data);
 public:
 	cProcessEpg();
 	~cProcessEpg();
