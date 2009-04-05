@@ -1,74 +1,35 @@
-#include <cstdlib>
-#include <string>
-#include <ctime>
-
-#include <zip.h>
-
-#include <libxml/xmlreader.h>
-#include <libxml/xmlstring.h>
-#include <libxml/xpath.h>
-
-#include "channelmap.h"
-#include "datamap.h"
+/*
+ * update.c: epgdata plugin for the Video Disk Recorder
+ *
+ * See the README file for copyright information and how to reach the author.
+ *
+ */
+#include "update.h"
 
 using namespace std;
 
-typedef struct {
-// mapping of external data
-  char *name;
-  cChannelMap *chanmap;
-  cDataMap *datamap;
-  int chanindex;
-  
-// data
-	int broadcast_id;
-	int tvshow_id;
-	int regional ;
-	int tvchannel_id;
-	time_t starttime;
-	time_t vps;
-	int tvshow_length;
-	string primetime ; 		
-	string category ;
-	string genre;
-	xmlChar *technics_bw;
-	xmlChar *technics_co_channel;
-	xmlChar *technics_vt150;
-	xmlChar *technics_coded;
-	xmlChar *technics_blind;
-	xmlChar *age_marker;
-	xmlChar *live;
-	xmlChar *tip;
-	xmlChar *title;
-	xmlChar *subtitle;
-	xmlChar *comment_long;
-	xmlChar *comment_middle;
-	xmlChar *comment_short;
-	xmlChar *themes;
-	xmlChar *sequence;
-	xmlChar *technics_stereo;
-	xmlChar *technics_dolby;
-	xmlChar *technics_wide;
-	xmlChar *stars;
-	xmlChar *attribute;
-	xmlChar *country;
-	xmlChar *moderator;
-	xmlChar *year;
-	xmlChar *studio_guest;
-	xmlChar *regisseur;
-	xmlChar *actor;
-} UserData, * UserDataPtr;
-
-static void processNode(xmlTextReaderPtr reader, UserDataPtr user_data) 
+cProcessEpg::cProcessEpg()
 {
-  UserDataPtr pud = user_data; 
-  struct tm tm;
-  char *name = (char *)xmlTextReaderConstName(reader);
-  const xmlChar *value;
-  
-  int type = xmlTextReaderNodeType(reader) ;
-  int depth = xmlTextReaderDepth(reader) ;
-  int retval;
+	UserDataPtr user_data;  
+	user_data.chanmap = new cChannelMap;
+	user_data.datamap = new cDataMap;
+}
+
+cProcessEpg::~cProcessEpg()
+{
+
+}
+
+static void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data) 
+{
+	UserDataPtr pud = user_data; 
+	struct tm tm;
+	const xmlChar *value;
+	int retval;
+	int type = xmlTextReaderNodeType(reader) ;
+	int depth = xmlTextReaderDepth(reader) ;
+	char *name = (char *)xmlTextReaderConstName(reader);
+
 
   if (type == XML_READER_TYPE_ELEMENT && depth == 2)
 	{
@@ -356,10 +317,8 @@ static void processNode(xmlTextReaderPtr reader, UserDataPtr user_data)
 
 
 
-int main(int argc, char *argv[])
+int processFile(UserDataPtr userdata, char *filename)
 {
-
-// Move unzip and process to process.c|h and into seperate function/class !!!
   struct zip *pzip;
   int num_files;
   int zipfilenum;
@@ -370,19 +329,13 @@ int main(int argc, char *argv[])
   char *buffer;
   xmlTextReaderPtr reader;
   int parseretval;
-  UserData user_data;  
-  user_data.chanmap = new cChannelMap();
-  user_data.datamap = new cDataMap();
-  
-  if (argc != 2)
-  {
-    fprintf(stderr, "error: invalid number of arguments\n");
-    return -1;
-  }
+  UserDataPtr user_data = userdata ;
+  char *file = filename;
 
-  if ((pzip = zip_open(argv[1], 0, NULL)) == NULL)
+  
+  if ((pzip = zip_open(file, 0, NULL)) == NULL)
   {
-    fprintf(stderr, "error: can't open %s\n", argv[1]);
+    fprintf(stderr, "error: can't open %s\n", file);
     return -2;
   }
   
@@ -409,16 +362,12 @@ int main(int argc, char *argv[])
 	  
 	  // fill buffer from xml
 	  len = zip_fread(zfile, buffer, zstat.size);
-	  // initialize & test Parserlib
 	  LIBXML_TEST_VERSION
-	  // make sure that all necessary file are in the folder
-	  // qy.dtd, category.xml, genre.xml
-	  // move directory definition elsewhere
 	  reader = xmlReaderForMemory(buffer, zstat.size,"/root/test1/include/","iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
 		if (reader != NULL)	{
 	        parseretval = xmlTextReaderRead(reader);
 	        while (parseretval == 1) {
-	            processNode(reader, &user_data);
+	            processNode(reader, user_data);
 	            parseretval = xmlTextReaderRead(reader);
 	        }
 	        xmlFreeTextReader(reader);

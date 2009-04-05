@@ -11,7 +11,8 @@
 #include <map>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
+#include <cstdlib>
+
 #include <libxml/xmlreader.h>
 #include <libxml/xmlstring.h>
 #include <libxml/xpath.h>
