@@ -21,6 +21,7 @@ typedef struct {
 // data
 	int broadcast_id;
 	int tvshow_id;
+	int regional ;
 	int tvchannel_id;
 	time_t starttime;
 	time_t vps;
@@ -76,7 +77,8 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 		//     
 		if 		(!strcmp(name,"d0")) pud->broadcast_id = atol((char *)value);
 		else if (!strcmp(name,"d1")) pud->tvshow_id = atol((char *)value);
-		else if (!strcmp(name,"d2")) pud->tvchannel_id = atol((char *)value); // d3 -  tvregionid not required
+		else if (!strcmp(name,"d2")) pud->tvchannel_id = atol((char *)value); 
+		else if (!strcmp(name,"d3")) pud->regional = atol((char *)value);
 		else if (!strcmp(name,"d4")) {	// starttime -  next would be  d5,d6: endtime, broadcast_day not required
 	    	sscanf((char *)value, "%04d-%02d-%02d %02d:%02d:%02d", &tm.tm_year, 
 	     	&tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
@@ -261,89 +263,91 @@ static void processNode(xmlTextReaderPtr reader, void *user_data)
 	{
 		// One event finished (data end tag reached), lets print the event!
 		//
-		for (pud->chanindex = 0; pud->chanindex < pud->chanmap->GetChanCnt(pud->tvchannel_id); pud->chanindex++)
-		{
-			// C: channelid channelname
-			// S19.2E-1-1101-28106 Das Erste
-			printf("C %s\n", pud->chanmap->GetChanStr(pud->tvchannel_id, pud->chanindex) );  
-			
-			// E: eventid starttime(unixdate) duration 0 0 
-			// 37237569 1236067500 3000 0 0
-			printf("E %d %d %d 50\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
-			
-			//T: title 
-			printf("T %s\n", pud->title);
-			
-			// subtitle(episodetitle or the like)
-			printf("S %s\n", pud->subtitle);
-			
-			//main text
-			printf("D ");
-			printf("%s",pud->stars);
-			printf("%s",pud->tip); 
-			printf("%s|", pud->comment_long);
-			printf("%s - %s",pud->category.c_str(), pud->genre.c_str());
-			printf("%s",pud->primetime.c_str());
-			printf("%s",pud->sequence);
-			
-			printf("%s",pud->technics_bw);
-			printf("%s",pud->technics_co_channel);
-			printf("%s",pud->technics_vt150);
-			printf("%s",pud->technics_coded);
-			printf("%s",pud->technics_blind);
-			printf("%s",pud->technics_stereo);
-			printf("%s",pud->technics_dolby);
-			printf("%s",pud->technics_wide);
-			
-			printf("%s",pud->age_marker);
-			printf("%s",pud->live);
-			printf("%s",pud->attribute);
-			printf("%s",pud->country);
-			printf("%s",pud->year);
-			printf("%s",pud->themes);
-			printf("%s",pud->moderator);
-			printf("%s",pud->studio_guest);
-			printf("%s",pud->regisseur);
-			printf("%s",pud->actor);
-			printf("\n"); // end of D (main information section, line breaks are '|' (pipe) in here !
-			if (pud->vps)
+		if (!pud->regional) {
+			for (pud->chanindex = 0; pud->chanindex < pud->chanmap->GetChanCnt(pud->tvchannel_id); pud->chanindex++)
 			{
-				printf("V %d\n", pud->vps);
+				// C: channelid channelname
+				// S19.2E-1-1101-28106 Das Erste
+				printf("C %s\n", pud->chanmap->GetChanStr(pud->tvchannel_id, pud->chanindex) );  
+				
+				// E: eventid starttime(unixdate) duration 0 0 
+				// 37237569 1236067500 3000 0 0
+				printf("E %d %d %d 50\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
+				
+				//T: title 
+				printf("T %s\n", pud->title);
+				
+				// subtitle(episodetitle or the like)
+				printf("S %s\n", pud->subtitle);
+				
+				//main text
+				printf("D ");
+				printf("%s",pud->stars);
+				printf("%s",pud->tip); 
+				printf("%s|", pud->comment_long);
+				printf("%s - %s",pud->category.c_str(), pud->genre.c_str());
+				printf("%s",pud->primetime.c_str());
+				printf("%s",pud->sequence);
+				
+				printf("%s",pud->technics_bw);
+				printf("%s",pud->technics_co_channel);
+				printf("%s",pud->technics_vt150);
+				printf("%s",pud->technics_coded);
+				printf("%s",pud->technics_blind);
+				printf("%s",pud->technics_stereo);
+				printf("%s",pud->technics_dolby);
+				printf("%s",pud->technics_wide);
+				
+				printf("%s",pud->age_marker);
+				printf("%s",pud->live);
+				printf("%s",pud->attribute);
+				printf("%s",pud->country);
+				printf("%s",pud->year);
+				printf("%s",pud->themes);
+				printf("%s",pud->moderator);
+				printf("%s",pud->studio_guest);
+				printf("%s",pud->regisseur);
+				printf("%s",pud->actor);
+				printf("\n"); // end of D (main information section, line breaks are '|' (pipe) in here !
+				if (pud->vps)
+				{
+					printf("V %d\n", pud->vps);
+				}
+				
+				// end event and channel
+				printf("e\n");
+				printf("c\n");
 			}
 			
-			// end event and channel
-			printf("e\n");
-			printf("c\n");
-		}
-		
-		// cleanup for next element
-		free(pud->technics_bw);			pud->technics_bw = NULL;
-		free(pud->technics_co_channel);	pud->technics_co_channel = NULL;
-		free(pud->technics_vt150);		pud->technics_vt150 =NULL;
-		free(pud->technics_coded);		pud->technics_coded = NULL;
-		free(pud->technics_blind);		pud->technics_blind = NULL;
-		free(pud->age_marker);			pud->age_marker = NULL;
-		free(pud->live);				pud->live = NULL; 
-		free(pud->tip);					pud->tip = NULL;
-		free(pud->title);				pud->title = NULL;
-		free(pud->subtitle);			pud->subtitle = NULL;
-		free(pud->comment_long);		pud->comment_long = NULL;
-		free(pud->comment_middle);		pud->comment_middle = NULL;
-		free(pud->comment_short);		pud->comment_short = NULL;
-		free(pud->themes);				pud->themes = NULL;
-		free(pud->sequence);			pud->sequence = NULL;
-		free(pud->stars);				pud->stars = NULL;
-		free(pud->attribute);			pud->attribute = NULL;
-		free(pud->technics_stereo);		pud->technics_stereo = NULL;
-		free(pud->technics_dolby);		pud->technics_dolby = NULL;
-		free(pud->technics_wide);		pud->technics_wide = NULL;
- 		free(pud->country);				pud->country = NULL;
-		free(pud->year);				pud->year = NULL;
-		free(pud->moderator);			pud->moderator = NULL;
-		free(pud->studio_guest);		pud->studio_guest = NULL;
-		free(pud->regisseur);			pud->regisseur = NULL;
-		free(pud->actor);				pud->actor = NULL;
-	} 
+			// cleanup for next element
+			free(pud->technics_bw);			pud->technics_bw = NULL;
+			free(pud->technics_co_channel);	pud->technics_co_channel = NULL;
+			free(pud->technics_vt150);		pud->technics_vt150 =NULL;
+			free(pud->technics_coded);		pud->technics_coded = NULL;
+			free(pud->technics_blind);		pud->technics_blind = NULL;
+			free(pud->age_marker);			pud->age_marker = NULL;
+			free(pud->live);				pud->live = NULL; 
+			free(pud->tip);					pud->tip = NULL;
+			free(pud->title);				pud->title = NULL;
+			free(pud->subtitle);			pud->subtitle = NULL;
+			free(pud->comment_long);		pud->comment_long = NULL;
+			free(pud->comment_middle);		pud->comment_middle = NULL;
+			free(pud->comment_short);		pud->comment_short = NULL;
+			free(pud->themes);				pud->themes = NULL;
+			free(pud->sequence);			pud->sequence = NULL;
+			free(pud->stars);				pud->stars = NULL;
+			free(pud->attribute);			pud->attribute = NULL;
+			free(pud->technics_stereo);		pud->technics_stereo = NULL;
+			free(pud->technics_dolby);		pud->technics_dolby = NULL;
+			free(pud->technics_wide);		pud->technics_wide = NULL;
+	 		free(pud->country);				pud->country = NULL;
+			free(pud->year);				pud->year = NULL;
+			free(pud->moderator);			pud->moderator = NULL;
+			free(pud->studio_guest);		pud->studio_guest = NULL;
+			free(pud->regisseur);			pud->regisseur = NULL;
+			free(pud->actor);				pud->actor = NULL;
+		} 
+	}
 }
 
 
