@@ -7,7 +7,15 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	cProcessEpg *process = new cProcessEpg;
-	int retval = process->processFile(process->user_data , argv[1]);
-	return retval;     
+	int n;
+	cProcessEpg *process ; 
+	process = new cProcessEpg();
+	UserData user_data;  
+
+	
+	for (n=1; n<argc; n++)
+	{
+		int retval = process->processFile(&user_data , argv[n]);
+	}
+	return 0 ;
 }

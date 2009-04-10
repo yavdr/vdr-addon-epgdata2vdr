@@ -58,7 +58,7 @@ int cDataMap::read_xml_file()
 	else fprintf(stderr, "Unable to open genre.xml\n");
 }
 
-void cDataMap::processData(xmlTextReaderPtr reader) 
+int cDataMap::processData(xmlTextReaderPtr reader) 
 {
 	// element callback from read_xmlfile
 	// args:	pointer to the xmlTextreader
@@ -80,6 +80,7 @@ void cDataMap::processData(xmlTextReaderPtr reader)
 		value = string((char *)xmlXPathCastNodeToString(xmlTextReaderExpand(reader)));
 		datamap[epgdataid]  = value;
 	}
+	return 0 ; 
 }
 
 string cDataMap::GetStr(int dataid)

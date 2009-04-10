@@ -24,10 +24,10 @@
 typedef struct {
 // mapping of external data
 	char *name;
-	cChannelMap *chanmap;
-	cDataMap *datamap;
 	int chanindex;
 // data
+	string category ;
+	string genre;
 	int broadcast_id;
 	int tvshow_id;
 	int regional ;
@@ -35,9 +35,7 @@ typedef struct {
 	time_t starttime;
 	time_t vps;
 	int tvshow_length;
-	string primetime ; 		
-	string category ;
-	string genre;
+	string primetime ;	
 	xmlChar *technics_bw;
 	xmlChar *technics_co_channel;
 	xmlChar *technics_vt150;
@@ -73,6 +71,8 @@ private:
 public:
 	cProcessEpg();
 	~cProcessEpg();
+	cChannelMap *chanmap;
+	cDataMap *datamap;
 	UserDataPtr user_data;
 	int processFile(UserDataPtr user_data, char *filename);
 };

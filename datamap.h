@@ -24,7 +24,7 @@ typedef map<int, string> cDMap;
 class cDataMap {
 private:
   int read_xml_file();
-  void processData(xmlTextReaderPtr reader);
+  int processData(xmlTextReaderPtr reader);
 public:
   cDataMap();
   ~cDataMap();
