@@ -39,13 +39,16 @@ int cDataMap::read_xml_file()
         }
         xmlFreeTextReader(reader);
         if (ret != 0) fprintf(stderr, "category.xml : failed to parse\n");
+		return ret;
     } 
-	else fprintf(stderr, "Unable to open category.xml\n");
+	else {
+		fprintf(stderr, "Unable to open category.xml\n");
+		return -1;
+	}
 	
 	// genres
 	reader = xmlReaderForFile("genre.xml", "iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
-    if (reader != NULL) 
-	{
+    if (reader != NULL) {
         ret = xmlTextReaderRead(reader);
         while (ret == 1) 
 		{
@@ -54,14 +57,20 @@ int cDataMap::read_xml_file()
         }
         xmlFreeTextReader(reader);
         if (ret != 0) fprintf(stderr, "Failed to parse genre.xml\n");
+		return ret;
     } 
-	else fprintf(stderr, "Unable to open genre.xml\n");
+	else { 
+		fprintf(stderr, "Unable to open genre.xml\n");
+		return -1;
+	}
 }
 
 int cDataMap::processData(xmlTextReaderPtr reader) 
 {
 	// element callback from read_xmlfile
 	// args:	pointer to the xmlTextreader
+	xmlNodePtr node ;
+	xmlChar *content;	
 	string value;
 	int epgdataid;
 	int retval;
@@ -74,10 +83,18 @@ int cDataMap::processData(xmlTextReaderPtr reader)
 
 	// get ca0/ca1 or g0/g1 depending which file we read
 	if (type == XML_READER_TYPE_ELEMENT && depth == 2 && (name.compare("ca0")||name.compare("g0"))) {
-		epgdataid = atol((char *)xmlXPathCastNodeToString(xmlTextReaderExpand(reader))); 
+		node = xmlTextReaderExpand(reader);
+		content = xmlXPathCastNodeToString(node);
+		node = NULL ;
+		epgdataid = atoi((char *)content);
+		xmlFree(content);
 		retval = xmlTextReaderNext(reader); // jump to end element 
 		retval = xmlTextReaderNext(reader); // jump to next start element 
-		value = string((char *)xmlXPathCastNodeToString(xmlTextReaderExpand(reader)));
+		node = xmlTextReaderExpand(reader);
+		content = xmlXPathCastNodeToString(node);
+		node = NULL ;
+		value = string((char *)content);
+		xmlFree(content);
 		datamap[epgdataid]  = value;
 	}
 	return 0 ; 

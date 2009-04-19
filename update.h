@@ -15,6 +15,7 @@
 #include <zip.h>
 
 #include <libxml/xmlreader.h>
+#include <libxml/xmlwriter.h>
 #include <libxml/xmlstring.h>
 #include <libxml/xpath.h>
 
@@ -26,16 +27,19 @@ typedef struct {
 	char *name;
 	int chanindex;
 // data
-	string category ;
+	// coming from map
+	string category;
 	string genre;
-	int broadcast_id;
-	int tvshow_id;
-	int regional ;
+	
+	//coming from XML
+	int regional;
 	int tvchannel_id;
 	time_t starttime;
 	time_t vps;
 	int tvshow_length;
-	string primetime ;	
+	xmlChar *broadcast_id;
+	xmlChar *tvshow_id;
+	xmlChar *primetime ;	
 	xmlChar *technics_bw;
 	xmlChar *technics_co_channel;
 	xmlChar *technics_vt150;
@@ -67,14 +71,13 @@ using namespace std;
 
 class cProcessEpg {
 private:
-	void processNode(xmlTextReaderPtr reader, UserDataPtr &user_data);
+	void processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data);
 public:
 	cProcessEpg();
 	~cProcessEpg();
 	cChannelMap *chanmap;
 	cDataMap *datamap;
-	UserDataPtr user_data;
-	int processFile(UserDataPtr user_data, char *filename);
+	int processFile(char *filename);
 };
 
 #endif

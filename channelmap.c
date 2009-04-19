@@ -51,7 +51,7 @@ cChannelMap::read_config_file ()
 	
 	//asprintf (&cfg_fname, "%s/tvm2vdr/epgdata2vdr_channelmap.conf",
 	//			  cPlugin::ConfigDirectory ());
-        asprintf (&cfg_fname, "epgdata2vdr_channelmap.conf");
+    asprintf (&cfg_fname, "epgdata2vdr_channelmap.conf");
 	cmfile.open (cfg_fname);
 	if (!cmfile)
 	{

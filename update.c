@@ -10,8 +10,8 @@ using namespace std;
 
 cProcessEpg::cProcessEpg()
 {
-	cProcessEpg::chanmap = new cChannelMap;
-	cProcessEpg::datamap = new cDataMap;
+	cProcessEpg::chanmap = new cChannelMap();
+	cProcessEpg::datamap = new cDataMap();
 }
 
 cProcessEpg::~cProcessEpg()
@@ -19,7 +19,7 @@ cProcessEpg::~cProcessEpg()
 
 }
 
-void cProcessEpg::processNode(xmlTextReaderPtr reader, UserDataPtr &user_data) 
+void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data) 
 {
 	UserDataPtr pud = user_data; 
 	
@@ -27,11 +27,12 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 	xmlNodePtr node ;
 	xmlChar *value;	
 	int retval;
+	
 	int type = xmlTextReaderNodeType(reader) ;
 	int depth = xmlTextReaderDepth(reader) ;
 	const char *name = (char *)xmlTextReaderConstName(reader);
 
-  if (type == XML_READER_TYPE_ELEMENT && depth == 2)
+	if (type == XML_READER_TYPE_ELEMENT && depth == 2)
 	{	
 		node = xmlTextReaderExpand(reader);
 		value = xmlXPathCastNodeToString(node) ; // get the content and ...
@@ -40,8 +41,8 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 		
 		// decide where to put the value
 		//     
-		if (!strcmp(name,"d0")) pud->broadcast_id = atol((char *)value);
-		else if (!strcmp(name,"d1")) pud->tvshow_id = atol((char *)value);
+		if (!strcmp(name,"d0")) pud->broadcast_id = xmlStrdup(value);
+		else if (!strcmp(name,"d1")) pud->tvshow_id = xmlStrdup(value);
 		else if (!strcmp(name,"d2")) pud->tvchannel_id = atol((char *)value); 
 		else if (!strcmp(name,"d3")) pud->regional = atol((char *)value);
 		else if (!strcmp(name,"d4")) {	// starttime -  next would be  d5,d6: endtime, broadcast_day not required
@@ -64,8 +65,8 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 			else pud->vps = 0;
 		}
 		else if (!strcmp(name,"d9")) {
-			if (atol((char *)value)) pud->primetime = string("|PrimeTime");
-								else pud->primetime = string("");
+			if (atol((char *)value)) pud->primetime = xmlCharStrdup("|PrimeTime");
+								else pud->primetime = xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d10")) {
 			if (atol((char *)value)) pud->category = cProcessEpg::datamap->GetStr(atol((char *)value));
@@ -222,69 +223,74 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 		
 			// d38, d39 	-	Bilder existieren nicht (image_small, image_medium)
 			// image_big		d40		Bildverarbeitung !
-		xmlFree(value); value = NULL ; 
+		xmlFree(value); 
+		value = NULL ; 
 	}
-	else if (type == 15 && depth == 1)
+	else if (type == XML_READER_TYPE_END_ELEMENT && depth == 1)
 	{
 		// One event finished (data end tag reached), lets print the event!
 		//
+		
+		
 		if (!pud->regional) {
 			for (pud->chanindex = 0; pud->chanindex < cProcessEpg::chanmap->GetChanCnt(pud->tvchannel_id); pud->chanindex++)
 			{
 				// C: channelid channelname
 				// S19.2E-1-1101-28106 Das Erste
-				printf("C %s\n", cProcessEpg::chanmap->GetChanStr(pud->tvchannel_id, pud->chanindex) );  
+				xmlTextWriterWriteFormatString(writer,"C %s\n", cProcessEpg::chanmap->GetChanStr(pud->tvchannel_id, pud->chanindex) );  
 				
 				// E: eventid starttime(unixdate) duration 0 0 
 				// 37237569 1236067500 3000 0 0
-				printf("E %d %ld %d 50\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
+				xmlTextWriterWriteFormatString(writer,"E %s %ld %d 50\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
 				
 				//T: title 
-				printf("T %s\n", pud->title);
+				xmlTextWriterWriteFormatString(writer,"T %s\n", pud->title);
 				
 				// subtitle(episodetitle or the like)
-				printf("S %s\n", pud->subtitle);
+				xmlTextWriterWriteFormatString(writer,"S %s\n", pud->subtitle);
 				
 				//main text
-				printf("D ");
-				printf("%s",pud->stars);
-				printf("%s",pud->tip); 
-				printf("%s|", pud->comment_long);
-				printf("%s - %s",pud->category.c_str(), pud->genre.c_str());
-				printf("%s",pud->primetime.c_str());
-				printf("%s",pud->sequence);
+				xmlTextWriterWriteFormatString(writer,"D ");
+				xmlTextWriterWriteFormatString(writer,"%s",pud->stars);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->tip); 
+				xmlTextWriterWriteFormatString(writer,"%s|", pud->comment_long);
+				xmlTextWriterWriteFormatString(writer,"%s - %s",pud->category.c_str(), pud->genre.c_str());
+				xmlTextWriterWriteFormatString(writer,"%s",pud->primetime);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->sequence);
 				
-				printf("%s",pud->technics_bw);
-				printf("%s",pud->technics_co_channel);
-				printf("%s",pud->technics_vt150);
-				printf("%s",pud->technics_coded);
-				printf("%s",pud->technics_blind);
-				printf("%s",pud->technics_stereo);
-				printf("%s",pud->technics_dolby);
-				printf("%s",pud->technics_wide);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_bw);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_co_channel);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_vt150);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_coded);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_blind);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_stereo);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_dolby);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_wide);
 				
-				printf("%s",pud->age_marker);
-				printf("%s",pud->live);
-				printf("%s",pud->attribute);
-				printf("%s",pud->country);
-				printf("%s",pud->year);
-				printf("%s",pud->themes);
-				printf("%s",pud->moderator);
-				printf("%s",pud->studio_guest);
-				printf("%s",pud->regisseur);
-				printf("%s",pud->actor);
-				printf("\n"); // end of D (main information section, line breaks are '|' (pipe) in here !
+				xmlTextWriterWriteFormatString(writer,"%s",pud->age_marker);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->live);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->attribute);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->country);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->year);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->themes);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->moderator);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->studio_guest);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->regisseur);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->actor);
+				xmlTextWriterWriteFormatString(writer,"%s",pud->tvshow_id);
+				xmlTextWriterWriteFormatString(writer,"\n"); // end of D (main information section, line breaks are '|' (pipe) in here !
 				if (pud->vps)
 				{
-					printf("V %ld\n", pud->vps);
+					xmlTextWriterWriteFormatString(writer,"V %ld\n", pud->vps);
 				}
 				
 				// end event and channel
-				printf("e\n");
-				printf("c\n");
+				xmlTextWriterWriteFormatString(writer,"e\n");
+				xmlTextWriterWriteFormatString(writer,"c\n");
 			}
 			
 			// cleanup for next element
+			xmlFree(pud->primetime);			pud->primetime = NULL ;
 			xmlFree(pud->technics_bw);			pud->technics_bw = NULL;
 			xmlFree(pud->technics_co_channel);	pud->technics_co_channel = NULL;
 			xmlFree(pud->technics_vt150);		pud->technics_vt150 =NULL;
@@ -313,27 +319,32 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, UserDataPtr &user_data)
 			xmlFree(pud->actor);				pud->actor = NULL;
 		} 
 	}
+
+
 }
 
 
 
 
 
-int cProcessEpg::processFile(UserDataPtr userdata, char *filename)
+int cProcessEpg::processFile(char *filename)
 {
   struct zip *pzip;
   int num_files;
   int zipfilenum;
-  const char *fname;
   struct zip_stat zstat;
   struct zip_file *zfile;
   int len;
   char *buffer;
   xmlTextReaderPtr reader;
+  xmlTextWriterPtr writer;
   int parseretval;
-  UserDataPtr user_data = userdata ;
+  UserData ud;
+  UserDataPtr user_data = &ud ;
+  const char *fname;
   char *file = filename;
-
+  string outfile = string(filename); 
+	     outfile = outfile.substr(0,outfile.length() -4) + ".epg"; 
   
   if ((pzip = zip_open(file, 0, NULL)) == NULL)
   {
@@ -366,17 +377,53 @@ int cProcessEpg::processFile(UserDataPtr userdata, char *filename)
 	  len = zip_fread(zfile, buffer, zstat.size);
 	  zip_fclose(zfile);
 	  
-	  LIBXML_TEST_VERSION
-	  reader = xmlReaderForMemory(buffer, zstat.size,"/root/test1/include/","iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
+		LIBXML_TEST_VERSION
+		writer = xmlNewTextWriterFilename(outfile.c_str(), 0);
+		if (writer == NULL) {
+			printf("testXmlwriterFilename: Error creating the xml writer\n");
+			return -27;
+		}
+		xmlTextWriterStartDocument(writer, NULL,"utf-8",NULL);
+		
+
+		reader = xmlReaderForMemory(buffer, zstat.size,"/root/test1/include/","iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
 		if (reader != NULL)	{
 	        parseretval = xmlTextReaderRead(reader);
 	        while (parseretval == 1) {
-	            processNode(reader, user_data);
+	            processNode(reader, writer, user_data);
 	            parseretval = xmlTextReaderRead(reader);
 	        }
 	        xmlFreeTextReader(reader);
+			xmlFreeTextWriter(writer);
 	        if (parseretval != 0) {
-	            fprintf(stderr, "failed to parse\n");
+	            fprintf(stderr, "failed to parse %s,\n skipping rest of the file and cleanup\n",file);
+					xmlFree(user_data->primetime);				user_data->primetime = NULL ;
+					xmlFree(user_data->technics_bw);			user_data->technics_bw = NULL;
+					xmlFree(user_data->technics_co_channel);	user_data->technics_co_channel = NULL;
+					xmlFree(user_data->technics_vt150);			user_data->technics_vt150 =NULL;
+					xmlFree(user_data->technics_coded);			user_data->technics_coded = NULL;
+					xmlFree(user_data->technics_blind);			user_data->technics_blind = NULL;
+					xmlFree(user_data->age_marker);				user_data->age_marker = NULL;
+					xmlFree(user_data->live);					user_data->live = NULL; 
+					xmlFree(user_data->tip);					user_data->tip = NULL;
+					xmlFree(user_data->title);					user_data->title = NULL;
+					xmlFree(user_data->subtitle);				user_data->subtitle = NULL;
+					xmlFree(user_data->comment_long);			user_data->comment_long = NULL;
+					xmlFree(user_data->comment_middle);			user_data->comment_middle = NULL;
+					xmlFree(user_data->comment_short);			user_data->comment_short = NULL;
+					xmlFree(user_data->themes);					user_data->themes = NULL;
+					xmlFree(user_data->sequence);				user_data->sequence = NULL;
+					xmlFree(user_data->stars);					user_data->stars = NULL;
+					xmlFree(user_data->attribute);				user_data->attribute = NULL;
+					xmlFree(user_data->technics_stereo);		user_data->technics_stereo = NULL;
+					xmlFree(user_data->technics_dolby);			user_data->technics_dolby = NULL;
+					xmlFree(user_data->technics_wide);			user_data->technics_wide = NULL;
+			 		xmlFree(user_data->country);				user_data->country = NULL;
+					xmlFree(user_data->year);					user_data->year = NULL;
+					xmlFree(user_data->moderator);				user_data->moderator = NULL;
+					xmlFree(user_data->studio_guest);			user_data->studio_guest = NULL;
+					xmlFree(user_data->regisseur);				user_data->regisseur = NULL;
+					xmlFree(user_data->actor);					user_data->actor = NULL;
 	        }
 		} 
 		else fprintf(stderr, "Unable to get xml\n");
