@@ -11,6 +11,9 @@
 #include <cstdlib>
 #include <string>
 #include <ctime>
+#include <clocale>
+#include <langinfo.h>
+
 
 #include <zip.h>
 

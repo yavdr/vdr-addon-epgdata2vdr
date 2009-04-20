@@ -340,8 +340,11 @@ int cProcessEpg::processFile(char *filename)
   xmlTextWriterPtr writer;
   int parseretval;
   UserData ud;
-  UserDataPtr user_data = &ud ;
   const char *fname;
+  xmlCharEncodingHandlerPtr encoder;
+  xmlOutputBufferPtr outdocbuffer ;
+  
+  UserDataPtr user_data = &ud ;
   char *file = filename;
   string outfile = string(filename); 
 	     outfile = outfile.substr(0,outfile.length() -4) + ".epg"; 
@@ -378,14 +381,24 @@ int cProcessEpg::processFile(char *filename)
 	  zip_fclose(zfile);
 	  
 		LIBXML_TEST_VERSION
-		writer = xmlNewTextWriterFilename(outfile.c_str(), 0);
-		if (writer == NULL) {
-			printf("testXmlwriterFilename: Error creating the xml writer\n");
-			return -27;
-		}
-		xmlTextWriterStartDocument(writer, NULL,"utf-8",NULL);
 		
+		setlocale(LC_ALL, "");
+		const char *encoding  = nl_langinfo(CODESET);
 
+		// initialize the writer
+		encoder = xmlFindCharEncodingHandler(encoding); 
+		outdocbuffer = xmlOutputBufferCreateFilename (outfile.c_str(), encoder, 0);
+		if (outdocbuffer == NULL) {
+			xmlOutputBufferClose(outdocbuffer);
+			fprintf(stderr, "could not create file %s.\n",outfile.c_str());
+		}
+		writer = xmlNewTextWriter(outdocbuffer);
+		if (writer == NULL) {
+			xmlFreeTextWriter(writer);
+			fprintf(stderr, "could not create file output for %s.\n", outfile.c_str());
+		}
+		
+		// initialize the reader 
 		reader = xmlReaderForMemory(buffer, zstat.size,"/root/test1/include/","iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
 		if (reader != NULL)	{
 	        parseretval = xmlTextReaderRead(reader);
