@@ -386,6 +386,7 @@ int cProcessEpg::processFile(char *filename)
 		
 		setlocale(LC_ALL, "");
 		const char *encoding  = nl_langinfo(CODESET);
+		fprintf(stderr, "Encoding detected: %s \n", encoding );
 
 		// initialize the writer
 		encoder = xmlFindCharEncodingHandler(encoding); 
