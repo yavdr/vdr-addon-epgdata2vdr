@@ -93,11 +93,13 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 								else pud->technics_blind = xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d16")) {
-			if (strlen((char *)value)) {
+			if (xmlStrlen(value)) {
 				pud->age_marker = xmlCharStrdup("|FSK: ");
-				xmlStrcat(pud->age_marker, value); 
+				pud->age_marker = xmlStrcat(pud->age_marker, value);
 			}
-			else pud->age_marker = xmlCharStrdup("");
+			else {
+				pud->age_marker = xmlCharStrdup("");
+			}
 		}
 		else if (!strcmp(name,"d17")) {
 			switch(atol((char *)value)) {
@@ -277,7 +279,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				xmlTextWriterWriteFormatString(writer,"%s",pud->studio_guest);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->regisseur);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->actor);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->tvshow_id);
+				xmlTextWriterWriteFormatString(writer,"|Show-Id: %s",pud->tvshow_id);
 				xmlTextWriterWriteFormatString(writer,"\n"); // end of D (main information section, line breaks are '|' (pipe) in here !
 				if (pud->vps)
 				{
@@ -399,7 +401,7 @@ int cProcessEpg::processFile(char *filename)
 		}
 		
 		// initialize the reader 
-		reader = xmlReaderForMemory(buffer, zstat.size,"/root/test1/include/","iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
+		reader = xmlReaderForMemory(buffer, zstat.size,confdir.c_str() ,"iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);  // TODO
 		if (reader != NULL)	{
 	        parseretval = xmlTextReaderRead(reader);
 	        while (parseretval == 1) {
@@ -409,7 +411,7 @@ int cProcessEpg::processFile(char *filename)
 	        xmlFreeTextReader(reader);
 			xmlFreeTextWriter(writer);
 	        if (parseretval != 0) {
-	            fprintf(stderr, "failed to parse %s,\n skipping rest of the file and cleanup\n",file);
+					fprintf(stderr, "failed to parse %s,\n skipping rest of the file and cleanup\n",file);
 					xmlFree(user_data->primetime);				user_data->primetime = NULL ;
 					xmlFree(user_data->technics_bw);			user_data->technics_bw = NULL;
 					xmlFree(user_data->technics_co_channel);	user_data->technics_co_channel = NULL;

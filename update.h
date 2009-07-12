@@ -81,6 +81,7 @@ public:
 	cChannelMap *chanmap;
 	cDataMap *datamap;
 	int processFile(char *filename);
+	string confdir ;
 };
 
 #endif

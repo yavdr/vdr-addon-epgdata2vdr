@@ -10,10 +10,12 @@ int main(int argc, char *argv[])
 	int n;
 	cProcessEpg *process ; 
 	process = new cProcessEpg();
+	process->confdir = string(argv[1]) ; 
 	
-	for (n=1; n<argc; n++)
+	for (n=2; n<argc; n++)
 	{
 		process->processFile(argv[n]);
 	}
+	delete process;
 	return 0 ;
 }
