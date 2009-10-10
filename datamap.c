@@ -8,10 +8,10 @@
 #include "datamap.h"
 
 
-cDataMap::cDataMap ()
+cDataMap::cDataMap (string confdir)
 {
 	datamap.clear();
-	read_xml_file();
+	read_xml_file(confdir);
 }
 
 cDataMap::~cDataMap ()
@@ -20,15 +20,17 @@ cDataMap::~cDataMap ()
 }
 
 
-int cDataMap::read_xml_file()
+int cDataMap::read_xml_file(string confdir)
 {
 	xmlTextReaderPtr reader;
-    int ret;
+    	int ret;
+	string genre = confdir + "genre.xml" ; 
+        string category = confdir + "category.xml" ; 
 	
 	// read categories and genre into ONE map. They don't share id's (Logic category div 100 = genre, category is never full 100)
 	
 	// categories 
-    reader = xmlReaderForFile("category.xml", "iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
+    reader = xmlReaderForFile(category.c_str(), "iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
     if (reader != NULL) 
 	{
         ret = xmlTextReaderRead(reader);
@@ -47,7 +49,7 @@ int cDataMap::read_xml_file()
 	}
 	
 	// genres
-	reader = xmlReaderForFile("genre.xml", "iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
+	reader = xmlReaderForFile(genre.c_str(), "iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
     if (reader != NULL) {
         ret = xmlTextReaderRead(reader);
         while (ret == 1) 
@@ -76,7 +78,7 @@ int cDataMap::processData(xmlTextReaderPtr reader)
 	int retval;
 	
 	// get name, type and depth in the xml structure
-    string name = string((char *)xmlTextReaderConstName(reader));
+    	string name = string((char *)xmlTextReaderConstName(reader));
 	int type = xmlTextReaderNodeType(reader) ;
 	int depth = xmlTextReaderDepth(reader) ;
 

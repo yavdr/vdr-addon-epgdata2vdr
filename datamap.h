@@ -23,10 +23,10 @@ typedef map<int, string> cDMap;
 
 class cDataMap {
 private:
-  int read_xml_file();
+  int read_xml_file(string confdir);
   int processData(xmlTextReaderPtr reader);
 public:
-  cDataMap();
+  cDataMap(string confdir);
   ~cDataMap();
   cDMap datamap;
   string GetStr(int dataid);

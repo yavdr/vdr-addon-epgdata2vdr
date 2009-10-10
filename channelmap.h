@@ -28,13 +28,12 @@ typedef map<int, bool> cVPSMap;
 class cChannelMap {
 private:
   void remove_whitespaces(char *s);
-  int read_config_file();
+  int read_config_file(string confdir);
 public:
-  cChannelMap();
+  cChannelMap(string confir);
   ~cChannelMap();
   cChanMap chanmap;
   cVPSMap vpsmap;
-  int ReloadChannelMap();
   int GetChanCnt(int tvmid);
   char *GetChanStr(int tvmid, int index);
 //  tChannelID GetChanID(int tvmid, int index);

@@ -8,10 +8,10 @@
 #include "channelmap.h"
 
 
-cChannelMap::cChannelMap ()
+cChannelMap::cChannelMap (string confdir)
 {
 	chanmap.clear ();
-	read_config_file ();
+	read_config_file(confdir);
 }
 
 cChannelMap::~cChannelMap ()
@@ -39,20 +39,17 @@ cChannelMap::remove_whitespaces (char *s)
 
 
 int
-cChannelMap::read_config_file ()
+cChannelMap::read_config_file (string confdir)
 {
 	ifstream cmfile;
+	string mapfile = confdir + "/epgdata2vdr_channelmap.conf" ;
 	string s;
 	size_t p;
 	int tvmid;
 	int n;
 	char *cfg_fname = NULL;
 	
-	
-	//asprintf (&cfg_fname, "%s/tvm2vdr/epgdata2vdr_channelmap.conf",
-	//			  cPlugin::ConfigDirectory ());
-    asprintf (&cfg_fname, "epgdata2vdr_channelmap.conf");
-	cmfile.open (cfg_fname);
+	cmfile.open (mapfile.c_str());
 	if (!cmfile)
 	{
 		//esyslog ("TVM2VDR: Error reading '%s'!", cfg_fname);
@@ -122,17 +119,5 @@ cChannelMap::GetChanStr (int tvmid, int index)
 	return chanmap[tvmid][index];
 }
 
-/*tChannelID cChannelMap::GetChanID (int tvmid, int index)
-{
-	if (chanmap[tvmid][index] == NULL)
-		return tChannelID::InvalidID;
-	return tChannelID::FromString (chanmap[tvmid][index]);
-}*/
 
 
-int
-cChannelMap::ReloadChannelMap ()
-{
-	chanmap.clear ();
-	return read_config_file ();
-}
