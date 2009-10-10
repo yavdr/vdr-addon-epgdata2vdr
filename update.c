@@ -23,6 +23,7 @@ void cProcessEpg::readMaps(string confdir)
 	cProcessEpg::chanmap = new cChannelMap(confdir);
 	cProcessEpg::datamap = new cDataMap(confdir);
 }                
+
 void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data) 
 {
 	UserDataPtr pud = user_data; 
