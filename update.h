@@ -50,7 +50,7 @@ typedef struct {
 	xmlChar *technics_blind;
 	xmlChar *age_marker;
 	xmlChar *live;
-	xmlChar *tip;
+	int 	tip;
 	xmlChar *title;
 	xmlChar *subtitle;
 	xmlChar *comment_long;

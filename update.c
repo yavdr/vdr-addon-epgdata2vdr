@@ -120,14 +120,11 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 			}
 		}
 		else if (!strcmp(name,"d18")) {
-			switch(atol((char *)value)) {
-				case 0: pud->tip = xmlCharStrdup(""); 				break;
-				case 1: pud->tip = xmlCharStrdup("[Spartentipp]");	break;
-				case 2:	pud->tip = xmlCharStrdup("[Genretipp]");	break;
-				case 3:	pud->tip = xmlCharStrdup("[Tagestipp]");	break;
-				default: 
-					pud->tip = xmlCharStrdup("");
-					fprintf(stderr, "unknown tipflag: %ld !\n", atol((char *)value));
+			if (xmlStrlen(value)) {
+				pud->tip = atoi((char *)value) ; 
+			}
+			else {
+				pud->tip = 0 ;
 			}
 		}
 		else if (!strcmp(name,"d19")) pud->title = xmlStrdup(value);
@@ -259,21 +256,50 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				//main text
 				xmlTextWriterWriteFormatString(writer,"D ");
 				xmlTextWriterWriteFormatString(writer,"%s",pud->stars);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->tip); 
-				xmlTextWriterWriteFormatString(writer,"%s|", pud->comment_long);
-				xmlTextWriterWriteFormatString(writer,"%s - %s",pud->category.c_str(), pud->genre.c_str());
-				xmlTextWriterWriteFormatString(writer,"%s",pud->primetime);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->sequence);
-				
-				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_bw);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_co_channel);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_vt150);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_coded);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_blind);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_stereo);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_dolby);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->technics_wide);
-				
+				if ((char *)pud->tip) {
+					switch(pud->tip) {
+						case 0: break;
+						case 1: xmlTextWriterWriteFormatString(writer,"[Spartentipp %s]",pud->category.c_str());
+							break;
+						case 2:	xmlTextWriterWriteFormatString(writer,"[Genretipp %s]",pud->genre.c_str());
+							break;
+						case 3:	xmlTextWriterWriteFormatString(writer,"[Tagestipp]");
+							break;
+						default: 
+							fprintf(stderr, "unknown tipflag: %ld !\n", atol((char *)value));
+					}					
+				}
+				if (xmlStrlen(pud->comment_short) != xmlStrlen(pud->comment_long) && xmlStrlen(pud->comment_short) > 0 ){
+					xmlTextWriterWriteFormatString(writer,"Zusammenfassung: %s |", pud->comment_short);
+				}
+				if (xmlStrlen(pud->comment_long) > 0) xmlTextWriterWriteFormatString(writer,"%s|", pud->comment_long);
+				if (pud->category.size() > 0 && pud->genre.size() > 0) {
+					xmlTextWriterWriteFormatString(writer,"%s - %s|",pud->category.c_str(), pud->genre.c_str());
+				} else if (pud->category.size() > 0) {
+					xmlTextWriterWriteFormatString(writer,"%s|",pud->category.c_str());
+				} else if (pud->genre.size() > 0) {
+					xmlTextWriterWriteFormatString(writer,"%s|",pud->category.c_str());
+				}
+				if (xmlStrlen(pud->primetime) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->primetime);
+				if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->sequence);
+				if (!xmlStrlen(pud->technics_bw) ||
+					!xmlStrlen(pud->technics_co_channel) ||
+					!xmlStrlen(pud->technics_coded) ||
+					!xmlStrlen(pud->technics_blind) ||
+					!xmlStrlen(pud->technics_stereo) ||
+					!xmlStrlen(pud->technics_dolby) ||
+					!xmlStrlen(pud->technics_wide)) {
+					xmlTextWriterWriteFormatString(writer,"Techn.Det.: ");
+						if (xmlStrlen(pud->technics_bw) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_bw);
+						if (xmlStrlen(pud->technics_co_channel) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_co_channel);
+						if (xmlStrlen(pud->technics_vt150) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_vt150);
+						if (xmlStrlen(pud->technics_coded) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_coded);
+						if (xmlStrlen(pud->technics_blind) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_blind);
+						if (xmlStrlen(pud->technics_stereo) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_stereo);
+						if (xmlStrlen(pud->technics_dolby) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_dolby);
+						if (xmlStrlen(pud->technics_wide) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_wide);
+					xmlTextWriterWriteFormatString(writer,"|");
+				}
 				xmlTextWriterWriteFormatString(writer,"%s",pud->age_marker);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->live);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->attribute);
@@ -305,7 +331,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 			xmlFree(pud->technics_blind);		pud->technics_blind = NULL;
 			xmlFree(pud->age_marker);			pud->age_marker = NULL;
 			xmlFree(pud->live);					pud->live = NULL; 
-			xmlFree(pud->tip);					pud->tip = NULL;
+			pud->tip = 0;
 			xmlFree(pud->title);				pud->title = NULL;
 			xmlFree(pud->subtitle);				pud->subtitle = NULL;
 			xmlFree(pud->comment_long);			pud->comment_long = NULL;
@@ -426,7 +452,7 @@ int cProcessEpg::processFile(char *filename)
 					xmlFree(user_data->technics_blind);			user_data->technics_blind = NULL;
 					xmlFree(user_data->age_marker);				user_data->age_marker = NULL;
 					xmlFree(user_data->live);					user_data->live = NULL; 
-					xmlFree(user_data->tip);					user_data->tip = NULL;
+					user_data->tip = 0;
 					xmlFree(user_data->title);					user_data->title = NULL;
 					xmlFree(user_data->subtitle);				user_data->subtitle = NULL;
 					xmlFree(user_data->comment_long);			user_data->comment_long = NULL;
