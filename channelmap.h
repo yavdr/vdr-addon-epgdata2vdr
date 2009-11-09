@@ -14,9 +14,6 @@
 #include <string>
 #include <stdlib.h>
 
-#include <vdr/plugin.h>
-#include <vdr/tools.h>
-
 using namespace std;
 
 typedef vector<char *> cChanVec;

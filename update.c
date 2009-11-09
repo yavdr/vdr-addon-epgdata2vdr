@@ -76,7 +76,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 			else pud->vps = 0;
 		}
 		else if (!strcmp(name,"d9")) {
-			if (atol((char *)value)) pud->primetime = xmlCharStrdup("|PrimeTime");
+			if (atol((char *)value)) pud->primetime = xmlCharStrdup("PrimeTime");
 								else pud->primetime = xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d10")) {
@@ -84,28 +84,28 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 								else pud->category = string("");
 		}
 		else if (!strcmp(name,"d11")) {
-			if (atol((char *)value)) pud->technics_bw = xmlCharStrdup("Schwarz Weiß,");
+			if (atol((char *)value)) pud->technics_bw = xmlCharStrdup("Schwarz Weiß");
 								else pud->technics_bw = xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d12")) {
-			if (atol((char *)value)) pud->technics_co_channel = xmlCharStrdup("Zweikanalton,");
+			if (atol((char *)value)) pud->technics_co_channel = xmlCharStrdup("Zweikanalton");
 								else pud->technics_co_channel = xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d13")) {
-			if (atol((char *)value)) pud->technics_vt150 = xmlCharStrdup("Untertitel,");
+			if (atol((char *)value)) pud->technics_vt150 = xmlCharStrdup("Untertitel");
 								else pud->technics_vt150 = xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d14")) {
-			if (atol((char *)value)) pud->technics_coded = xmlCharStrdup("PayTV,");
+			if (atol((char *)value)) pud->technics_coded = xmlCharStrdup("PayTV");
 								else pud->technics_coded = xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d15")) {
-			if (atol((char *)value)) pud->technics_blind = xmlCharStrdup("Hörfilm,");
+			if (atol((char *)value)) pud->technics_blind = xmlCharStrdup("Hörfilm");
 								else pud->technics_blind = xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d16")) {
 			if (xmlStrlen(value)) {
-				pud->age_marker = xmlCharStrdup("|FSK: ");
+				pud->age_marker = xmlCharStrdup("FSK: ");
 				pud->age_marker = xmlStrcat(pud->age_marker, value);
 			}
 			else {
@@ -115,9 +115,9 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 		else if (!strcmp(name,"d17")) {
 			switch(atol((char *)value)) {
 				case 0: pud->live = xmlCharStrdup("");				break;
-				case 1: pud->live = xmlCharStrdup("|Live");			break;
-				case 2:	pud->live = xmlCharStrdup("|Wiederholung");	break;
-				case 3: pud->live = xmlCharStrdup("|Zeitversetzte Übertragung");	break;
+				case 1: pud->live = xmlCharStrdup("Live");			break;
+				case 2:	pud->live = xmlCharStrdup("Wiederholung");	break;
+				case 3: pud->live = xmlCharStrdup("Zeitversetzte Übertragung");	break;
 				default:
 					pud->live = xmlCharStrdup("") ;
 					fprintf(stderr, 
@@ -157,15 +157,15 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 			else pud->sequence = xmlCharStrdup("");
 		}		
 		else if (!strcmp(name,"d27")) {
-			if (atol((char *)value)) pud->technics_stereo = xmlCharStrdup("Stereo,");
+			if (atol((char *)value)) pud->technics_stereo = xmlCharStrdup("Stereo");
 								else pud->technics_stereo = xmlCharStrdup("");
 		}	
 		else if (!strcmp(name,"d28")) {
-			if (atol((char *)value)) pud->technics_dolby =  xmlCharStrdup("Dolby Digital,");
+			if (atol((char *)value)) pud->technics_dolby =  xmlCharStrdup("Dolby Digital");
 								else pud->technics_dolby =  xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d29")) {
-			if (atol((char *)value)) pud->technics_wide =  xmlCharStrdup("16:9,");
+			if (atol((char *)value)) pud->technics_wide =  xmlCharStrdup("16:9");
 								else pud->technics_wide =  xmlCharStrdup("");
 		}		
 		else if (!strcmp(name,"d30")) {
@@ -183,14 +183,14 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 		} 
 		else if (!strcmp(name,"d31")) {
 			if (xmlStrlen(value)) {
-				pud->attribute = xmlCharStrdup("|Prädikat: ");
+				pud->attribute = xmlCharStrdup("Prädikat: ");
 				pud->attribute = xmlStrcat(pud->attribute,value);
 			}
 			else pud->attribute = xmlCharStrdup("");
 		}		
 		else if (!strcmp(name,"d32")) {
 			if (xmlStrlen(value)) {
-				pud->country = xmlCharStrdup("|Land: ");
+				pud->country = xmlCharStrdup("Land: ");
 				pud->country = xmlStrcat(pud->country,value);
 			}
 			else pud->country = xmlCharStrdup("");
@@ -211,7 +211,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 		}	
 		else if (!strcmp(name,"d35")) {
 			if (xmlStrlen(value)) {
-				pud->studio_guest = xmlCharStrdup("|Gast: ");
+				pud->studio_guest = xmlCharStrdup("|Zu Gast: ");
 				pud->studio_guest = xmlStrcat(pud->studio_guest,value);
 			}
 			else pud->studio_guest = xmlCharStrdup("");
@@ -257,7 +257,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				
 				// E: eventid starttime(unixdate) duration 0 0 
 				// 37237569 1236067500 3000 0 0
-				xmlTextWriterWriteFormatString(writer,"E %s %ld %d 50\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
+				xmlTextWriterWriteFormatString(writer,"E %s %ld %d 0\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
 				
 				//T: title 
 				xmlTextWriterWriteFormatString(writer,"T %s\n", pud->title);
@@ -270,19 +270,20 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				xmlTextWriterWriteFormatString(writer,"%s",pud->stars);
 				switch(pud->tip) {
 						case 0: break;
-						case 1: xmlTextWriterWriteFormatString(writer,"[Spartentipp %s]",pud->category.c_str());
+						case 1: xmlTextWriterWriteFormatString(writer,"[Spartentipp %s] ",pud->category.c_str());
 							break;
-						case 2:	xmlTextWriterWriteFormatString(writer,"[Genretipp %s]",pud->genre.c_str());
+						case 2:	xmlTextWriterWriteFormatString(writer,"[Genretipp %s] ",pud->genre.c_str());
 							break;
-						case 3:	xmlTextWriterWriteFormatString(writer,"[Tagestipp]");
+						case 3:	xmlTextWriterWriteFormatString(writer,"[Tagestipp] ");
 							break;
 						default: 
 							fprintf(stderr, "unknown tipflag: %d !\n", pud->tip);
 					}
 				if (xmlStrlen(pud->comment_short) != xmlStrlen(pud->comment_long) && xmlStrlen(pud->comment_short) > 0 ){
-					xmlTextWriterWriteFormatString(writer,"Zusammenfassung: %s |", pud->comment_short);
+					xmlTextWriterWriteFormatString(writer,"Zusammenfassung: %s ||", pud->comment_short);
 				}
 				if (xmlStrlen(pud->comment_long) > 0) xmlTextWriterWriteFormatString(writer,"%s|", pud->comment_long);
+				
 				if (pud->category.size() > 0 && pud->genre.size() > 0) {
 					xmlTextWriterWriteFormatString(writer,"%s - %s|",pud->category.c_str(), pud->genre.c_str());
 				} else if (pud->category.size() > 0) {
@@ -290,6 +291,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				} else if (pud->genre.size() > 0) {
 					xmlTextWriterWriteFormatString(writer,"%s|",pud->category.c_str());
 				}
+				
 				if (xmlStrlen(pud->primetime) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->primetime);
 				if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->sequence);
 				if (!xmlStrlen(pud->technics_bw) ||
@@ -377,7 +379,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 
 
 
-int cProcessEpg::processFile(char *filename)
+int cProcessEpg::processFile(string confdir , char *filename)
 {
   // unzip
   int num_files;
@@ -386,7 +388,7 @@ int cProcessEpg::processFile(char *filename)
   struct zip_stat zstat;
   struct zip_file *zfile;
   char *buffer;
-  const char *fname;
+  const char *fname; 
   
   // parse 
   xmlCharEncodingHandlerPtr encoder;
@@ -535,13 +537,7 @@ int cProcessEpg::processFile(char *filename)
 		
 		string outpic = user_data->picdir + "/" + string(fname).substr(0,string(fname).length() -4) + ".png";
 		
-#ifndef USE_IMAGEMAGICK
-        // FILE *fh1 = NULL;
-        // if ((fh1 = fopen(fname, "w"))) {
-            // fwrite(buffer, 1, zstat.size, fh1);
-            // fclose(fh1);
-        // } else {
-#else
+#ifdef USE_IMAGEMAGICK
 
               Image *image, *scaled_image;
               ImageInfo *image_info;
@@ -573,6 +569,36 @@ int cProcessEpg::processFile(char *filename)
               DestroyImageInfo(image_info);
               DestroyExceptionInfo(exception);
 #endif
+		}
+	// extract the dtd
+		if (!strcmp(fname + strlen(fname) - 4, ".dtd")) {
+		  if (zip_stat_index(pzip, zipfilenum, 0, &zstat)) {
+			fprintf(stderr, "error: can't get stat for %s\n", fname);
+			return -4;
+		  }
+		  if ((buffer = (char *)malloc(zstat.size)) == NULL) {
+			fprintf(stderr, "error: can't get enough memory\n");
+			return -5;
+		  }
+		  if ((zfile = zip_fopen_index(pzip, zipfilenum, 0)) == NULL) {
+			fprintf(stderr, "error: can't open zip file %s\n", fname);
+			return -7;
+		  }
+	  
+		  // fill buffer from dtd
+		  if (zip_fread(zfile, buffer, zstat.size) == -1 ) {
+			fprintf(stderr, "could not extract dtd file from %s.\n", outfile.c_str());
+		  };
+		  zip_fclose(zfile);
+			
+			string dtdname = confdir + string(fname);
+			FILE *fh1 = NULL;
+			if ((fh1 = fopen(dtdname.c_str(), "w"))) {
+				fwrite(buffer, 1, zstat.size, fh1);
+				fclose(fh1);
+			} else {
+				fprintf(stderr, "could not write dtd file to confdir.\n");
+			}
 		}
 	free(buffer); buffer = NULL;
   } // end of iteration through the files

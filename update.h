@@ -14,6 +14,9 @@
 #include <clocale>
 #include <langinfo.h>
 #include <libgen.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #ifdef USE_IMAGEMAGICK
 #include <magick/api.h>
@@ -89,7 +92,7 @@ public:
 	~cProcessEpg();
 	cChannelMap *chanmap;
 	cDataMap *datamap;
-	int processFile(char *filename);
+	int processFile(string confdir, char *filename);
     void readMaps(string confdir) ; 
 	string confdir ;
 	string epgimagesdir;

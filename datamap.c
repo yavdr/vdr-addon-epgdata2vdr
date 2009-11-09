@@ -23,25 +23,26 @@ cDataMap::~cDataMap ()
 int cDataMap::read_xml_file(string confdir)
 {
 	xmlTextReaderPtr reader;
-    	int ret;
+    int ret;
 	string genre = confdir + "genre.xml" ; 
-        string category = confdir + "category.xml" ; 
+    string category = confdir + "category.xml" ; 
 	
-	// read categories and genre into ONE map. They don't share id's (Logic category div 100 = genre, category is never full 100)
+	// read categories and genre into ONE map. They don't share id's (Logic genre div 100 = category, genre is never full 100)
 	
 	// categories 
     reader = xmlReaderForFile(category.c_str(), "iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
-    if (reader != NULL) 
-	{
+    if (reader != NULL) {
         ret = xmlTextReaderRead(reader);
-        while (ret == 1) 
-		{
+        while (ret == 1) {
             processData(reader);
             ret = xmlTextReaderRead(reader);
         }
         xmlFreeTextReader(reader);
-        if (ret != 0) fprintf(stderr, "category.xml : failed to parse\n");
-		return ret;
+		
+        if (ret != 0) {
+			fprintf(stderr, "category.xml : failed to parse\n");
+			return ret;
+		}
     } 
 	else {
 		fprintf(stderr, "Unable to open category.xml\n");
@@ -52,19 +53,21 @@ int cDataMap::read_xml_file(string confdir)
 	reader = xmlReaderForFile(genre.c_str(), "iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);
     if (reader != NULL) {
         ret = xmlTextReaderRead(reader);
-        while (ret == 1) 
-		{
+        while (ret == 1) {
             processData(reader);
             ret = xmlTextReaderRead(reader);
         }
         xmlFreeTextReader(reader);
-        if (ret != 0) fprintf(stderr, "Failed to parse genre.xml\n");
-		return ret;
+        if (ret != 0) {
+			fprintf(stderr, "genre.xml : failed to parse\n");
+			return ret;
+		}
     } 
 	else { 
 		fprintf(stderr, "Unable to open genre.xml\n");
 		return -1;
 	}
+	return 0;	
 }
 
 int cDataMap::processData(xmlTextReaderPtr reader) 
@@ -78,20 +81,40 @@ int cDataMap::processData(xmlTextReaderPtr reader)
 	int retval;
 	
 	// get name, type and depth in the xml structure
-    	string name = string((char *)xmlTextReaderConstName(reader));
+    string name = string((char *)xmlTextReaderConstName(reader));
+
 	int type = xmlTextReaderNodeType(reader) ;
 	int depth = xmlTextReaderDepth(reader) ;
 
 
 	// get ca0/ca1 or g0/g1 depending which file we read
-	if (type == XML_READER_TYPE_ELEMENT && depth == 2 && (name.compare("ca0")||name.compare("g0"))) {
+	if (type == XML_READER_TYPE_ELEMENT && depth == 2 && (name.compare("ca0") == 0)) {
+		node = xmlTextReaderExpand(reader); 
+		content = xmlXPathCastNodeToString(node);
+		node = NULL ;
+		epgdataid = atoi((char *)content);
+		xmlFree(content);
+		
+		retval = xmlTextReaderNext(reader); // jump to end element 
+		retval = xmlTextReaderNext(reader); // jump to next start element 
+		
+		node = xmlTextReaderExpand(reader);
+		content = xmlXPathCastNodeToString(node);
+		node = NULL ;
+		value = string((char *)content);
+		xmlFree(content);
+		datamap[epgdataid]  = value;
+		
+	} else if (type == XML_READER_TYPE_ELEMENT && depth == 2 && ( name.compare("g0") == 0 )) {
 		node = xmlTextReaderExpand(reader);
 		content = xmlXPathCastNodeToString(node);
 		node = NULL ;
 		epgdataid = atoi((char *)content);
 		xmlFree(content);
+		
 		retval = xmlTextReaderNext(reader); // jump to end element 
 		retval = xmlTextReaderNext(reader); // jump to next start element 
+		
 		node = xmlTextReaderExpand(reader);
 		content = xmlXPathCastNodeToString(node);
 		node = NULL ;

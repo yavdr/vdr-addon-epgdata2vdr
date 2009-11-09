@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	for (n=3; n<argc; n++)
 #endif
 	{
-		process->processFile(argv[n]);
+		process->processFile(process->confdir, argv[n]);
 	}
 	delete process;
 	return 0 ;

@@ -1,5 +1,5 @@
 
-#USE_IMAGEMAGICK=1
+USE_IMAGEMAGICK=1
 
 ifdef USE_IMAGEMAGICK
 LIBS += $(shell Magick-config --ldflags --libs)
