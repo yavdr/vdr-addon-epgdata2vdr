@@ -10,10 +10,11 @@ int main(int argc, char *argv[])
 	int n;
 	cProcessEpg *process ; 
 	process = new cProcessEpg();
-	process->confdir = string(argv[1]) ; 
+	process->confdir = string(argv[1]) ;
+	process->epgimagesdir = string(argv[2]) ;
 	process->readMaps(process->confdir) ; 
 	
-	for (n=2; n<argc; n++)
+	for (n=3; n<argc; n++)
 	{
 		process->processFile(argv[n]);
 	}

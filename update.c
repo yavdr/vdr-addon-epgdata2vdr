@@ -10,12 +10,18 @@ using namespace std;
 
 cProcessEpg::cProcessEpg()
 {
-
+  LIBXML_TEST_VERSION
+#ifdef USE_IMAGEMAGICK
+  InitializeMagick("vdr-plugin-tvm2vdr");
+#endif
 }
 
 cProcessEpg::~cProcessEpg()
 {
-
+  xmlCleanupParser();
+#ifdef USE_IMAGEMAGICK
+  DestroyMagick();
+#endif
 }
 
 void cProcessEpg::readMaps(string confdir)
@@ -223,10 +229,16 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				pud->actor = xmlStrcat(pud->actor,value);
 			}
 			else pud->actor = xmlCharStrdup("");
-		}	
+		}
+		// d38, d39 	-	pictures don't exist ! (image_small, image_medium)
+		else if (!strcmp(name,"d40")) {
+			if (xmlStrlen(value)) {
+				string pic = pud->picdir + "/" + string((char *)value);
+				pud->sourcepic = pic.substr(0,pic.length() - 4) + ".png" ; 
+			}
+		}
 		
-			// d38, d39 	-	Bilder existieren nicht (image_small, image_medium)
-			// image_big		d40		Bildverarbeitung !
+
 		xmlFree(value); 
 		value = NULL ; 
 	}
@@ -256,8 +268,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				//main text
 				xmlTextWriterWriteFormatString(writer,"D ");
 				xmlTextWriterWriteFormatString(writer,"%s",pud->stars);
-				if ((char *)pud->tip) {
-					switch(pud->tip) {
+				switch(pud->tip) {
 						case 0: break;
 						case 1: xmlTextWriterWriteFormatString(writer,"[Spartentipp %s]",pud->category.c_str());
 							break;
@@ -266,9 +277,8 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 						case 3:	xmlTextWriterWriteFormatString(writer,"[Tagestipp]");
 							break;
 						default: 
-							fprintf(stderr, "unknown tipflag: %ld !\n", atol((char *)value));
-					}					
-				}
+							fprintf(stderr, "unknown tipflag: %d !\n", pud->tip);
+					}
 				if (xmlStrlen(pud->comment_short) != xmlStrlen(pud->comment_long) && xmlStrlen(pud->comment_short) > 0 ){
 					xmlTextWriterWriteFormatString(writer,"Zusammenfassung: %s |", pud->comment_short);
 				}
@@ -320,6 +330,10 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				// end event and channel
 				xmlTextWriterWriteFormatString(writer,"e\n");
 				xmlTextWriterWriteFormatString(writer,"c\n");
+				if (pud->sourcepic.length() > 0) {
+					string destpic = epgimagesdir + "/" + string((char *)pud->broadcast_id) + ".png"; 
+					symlink(pud->sourcepic.c_str(),destpic.c_str()); 
+				}
 			}
 			
 			// cleanup for next element
@@ -350,6 +364,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 			xmlFree(pud->studio_guest);			pud->studio_guest = NULL;
 			xmlFree(pud->regisseur);			pud->regisseur = NULL;
 			xmlFree(pud->actor);				pud->actor = NULL;
+			pud->sourcepic = "" ;
 		} 
 	}
 
@@ -362,58 +377,78 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 
 int cProcessEpg::processFile(char *filename)
 {
-  struct zip *pzip;
+  // unzip
   int num_files;
   int zipfilenum;
+  struct zip *pzip;
   struct zip_stat zstat;
   struct zip_file *zfile;
-  int len;
   char *buffer;
+  const char *fname;
+  
+  // parse 
+  xmlCharEncodingHandlerPtr encoder;
+  xmlOutputBufferPtr outdocbuffer ;
   xmlTextReaderPtr reader;
   xmlTextWriterPtr writer;
   int parseretval;
-  UserData ud;
-  const char *fname;
-  xmlCharEncodingHandlerPtr encoder;
-  xmlOutputBufferPtr outdocbuffer ;
   
+  // temp store
+  UserData ud;  
   UserDataPtr user_data = &ud ;
-  char *file = filename;
-  string outfile = string(filename); 
-	     outfile = outfile.substr(0,outfile.length() -4) + ".epg"; 
-  
-  if ((pzip = zip_open(file, 0, NULL)) == NULL)
+
+  // in/output -  filename e.g.: 20091014_20091009_de_qy.zip
+  string file = string(filename);
+  char *dir = dirname(filename);
+  string outfile = file.substr(0,file.length() -4) + ".epg";
+  user_data->picdir =  string(dir) + "/" + file.substr(file.length() -18, 8);
+
+  // TODO: make it more error tolerant
+#ifdef USE_IMAGEMAGICK
+  struct stat ds;
+  if ( !stat(user_data->picdir.c_str(), &ds) == 0) { 
+   if (mkdir(user_data->picdir.c_str(), ACCESSPERMS) == -1) {
+		fprintf(stderr, "can't create picture directory %s\n", user_data->picdir.c_str());
+		return -2;
+	}
+  }
+#endif
+
+  if ((pzip = zip_open(file.c_str(), 0, NULL)) == NULL)
   {
-    fprintf(stderr, "error: can't open %s\n", file);
+    fprintf(stderr, "error: can't open %s\n", file.c_str());
     return -2;
   }
   
-  num_files = zip_get_num_files(pzip);
-  for (zipfilenum = 0; zipfilenum < num_files; zipfilenum++)
-  {
-    if ((fname = zip_get_name(pzip, zipfilenum, 0)) == NULL) {
-      fprintf(stderr, "error: can't get filename for index %d\n", zipfilenum);
-      return -3;
-    } 
-    if (!strcmp(fname + strlen(fname) - 4, ".xml")) {
-      if (zip_stat_index(pzip, zipfilenum, 0, &zstat)) {
-        fprintf(stderr, "error: can't get stat for %s\n", fname);
-        return -4;
-      }
-      if ((buffer = (char *)malloc(zstat.size)) == NULL) {
-        fprintf(stderr, "error: can't get enough memory\n");
-        return -5;
-      }
-      if ((zfile = zip_fopen_index(pzip, zipfilenum, 0)) == NULL) {
-        fprintf(stderr, "error: can't can't open zip file %s\n", fname);
-        return -7;
-      }
+  num_files = zip_get_num_files(pzip); // get number of files in zip to iterate
+  
+	for (zipfilenum = 0; zipfilenum < num_files; zipfilenum++) { 
+  // iterate through the files
+		if ((fname = zip_get_name(pzip, zipfilenum, 0)) == NULL) {
+			// get the filename
+			fprintf(stderr, "error: can't get filename for index %d\n", zipfilenum);
+			return -3;
+		} 
+	// work on the xml
+		if (!strcmp(fname + strlen(fname) - 4, ".xml")) {
+		  if (zip_stat_index(pzip, zipfilenum, 0, &zstat)) {
+			fprintf(stderr, "error: can't get stat for %s\n", fname);
+			return -4;
+		  }
+		  if ((buffer = (char *)malloc(zstat.size)) == NULL) {
+			fprintf(stderr, "error: can't get enough memory\n");
+			return -5;
+		  }
+		  if ((zfile = zip_fopen_index(pzip, zipfilenum, 0)) == NULL) {
+			fprintf(stderr, "error: can't open zip file %s\n", fname);
+			return -7;
+		  }
 	  
-	  // fill buffer from xml
-	  len = zip_fread(zfile, buffer, zstat.size);
-	  zip_fclose(zfile);
-	  
-		LIBXML_TEST_VERSION
+		  // fill buffer from xml
+		  if (zip_fread(zfile, buffer, zstat.size) == -1 ) {
+			fprintf(stderr, "could not extract xml file from %s.\n", outfile.c_str());
+		  };
+		  zip_fclose(zfile);
 		
 		setlocale(LC_ALL, "");
 		const char *encoding  = nl_langinfo(CODESET);
@@ -443,7 +478,7 @@ int cProcessEpg::processFile(char *filename)
 	        xmlFreeTextReader(reader);
 			xmlFreeTextWriter(writer);
 	        if (parseretval != 0) {
-					fprintf(stderr, "failed to parse %s,\n skipping rest of the file and cleanup\n",file);
+					fprintf(stderr, "failed to parse %s,\n skipping rest of the file and cleanup\n",file.c_str());
 					xmlFree(user_data->primetime);				user_data->primetime = NULL ;
 					xmlFree(user_data->technics_bw);			user_data->technics_bw = NULL;
 					xmlFree(user_data->technics_co_channel);	user_data->technics_co_channel = NULL;
@@ -474,15 +509,78 @@ int cProcessEpg::processFile(char *filename)
 	        }
 		} 
 		else fprintf(stderr, "Unable to get xml\n");
-      xmlCleanupParser();
     }
-}
+	// export the pictures
+		if (!strcmp(fname + strlen(fname) - 4, ".jpg")) {
+		  if (zip_stat_index(pzip, zipfilenum, 0, &zstat)) {
+			fprintf(stderr, "error: can't get stat for %s\n", fname);
+			return -4;
+		  }
+		  if ((buffer = (char *)malloc(zstat.size)) == NULL) {
+			fprintf(stderr, "error: can't get enough memory\n");
+			return -5;
+		  }
+		  if ((zfile = zip_fopen_index(pzip, zipfilenum, 0)) == NULL) {
+			fprintf(stderr, "error: can't open zip file %s\n", fname);
+			return -7;
+		  }
+	  
+		  // fill buffer from jpg
+		  if (zip_fread(zfile, buffer, zstat.size) == -1 ) {
+			fprintf(stderr, "could not extract jpg file from %s.\n", outfile.c_str());
+		  };
+		  zip_fclose(zfile);
+		
+		string outpic = user_data->picdir + "/" + string(fname).substr(0,string(fname).length() -4) + ".png";
+		
+#ifndef USE_IMAGEMAGICK
+        // FILE *fh1 = NULL;
+        // if ((fh1 = fopen(fname, "w"))) {
+            // fwrite(buffer, 1, zstat.size, fh1);
+            // fclose(fh1);
+        // } else {
+            fprintf(stderr, "would write jpg file %s.\n", outpic.c_str());      
+#else
+
+              Image *image, *scaled_image;
+              ImageInfo *image_info;
+              ExceptionInfo *exception;
+			  
+              if ((exception=(ExceptionInfo *) AcquireMagickMemory(sizeof(*exception))) == NULL){                                                
+                fprintf(stderr,"can't AcquireMagickMemory");
+                return -4;
+              }
+              GetExceptionInfo(exception);
+
+              image_info = CloneImageInfo((ImageInfo *) NULL);
+              image = BlobToImage(image_info,  buffer, zstat.size, exception);
+              if (exception->severity != UndefinedException)
+                CatchException(exception);
+              
+			  double factor = 120.0 / std::max(image->columns, image->rows);
+
+              scaled_image = ScaleImage(image, (int)(image->columns * factor + 0.5), (int)(image->rows * factor + 0.5), exception);
+              if (exception->severity != UndefinedException)
+                CatchException(exception);
+
+              strcpy(scaled_image->filename, outpic.c_str());
+              WriteImage(image_info, scaled_image);
+
+          
+              DestroyImage(image);
+              DestroyImage(scaled_image);
+              DestroyImageInfo(image_info);
+              DestroyExceptionInfo(exception);
+#endif
+		}
+	free(buffer); buffer = NULL;
+  } // end of iteration through the files
 
   if (zip_close(pzip))
   {
     fprintf(stderr, "error: can't close zip file\n");
     return -9;
   }   
-  free(buffer); buffer = NULL;
+  
   return 0;
 }

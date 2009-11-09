@@ -13,7 +13,14 @@
 #include <ctime>
 #include <clocale>
 #include <langinfo.h>
+#include <libgen.h>
 
+#ifdef USE_IMAGEMAGICK
+#include <magick/api.h>
+#ifdef VERSION // Workaround for old and buggy imagemagick
+#undef VERSION
+#endif
+#endif
 
 #include <zip.h>
 
@@ -69,6 +76,8 @@ typedef struct {
 	xmlChar *studio_guest;
 	xmlChar *regisseur;
 	xmlChar *actor;
+	string  picdir;
+	string  sourcepic ;
 } UserData, * UserDataPtr;
 using namespace std; 
 
@@ -81,8 +90,9 @@ public:
 	cChannelMap *chanmap;
 	cDataMap *datamap;
 	int processFile(char *filename);
-        void readMaps(string confdir) ; 
+    void readMaps(string confdir) ; 
 	string confdir ;
+	string epgimagesdir;
 };
 
 #endif
