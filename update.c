@@ -330,10 +330,12 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				// end event and channel
 				xmlTextWriterWriteFormatString(writer,"e\n");
 				xmlTextWriterWriteFormatString(writer,"c\n");
+#ifdef USE_IMAGEMAGICK
 				if (pud->sourcepic.length() > 0) {
 					string destpic = epgimagesdir + "/" + string((char *)pud->broadcast_id) + ".png"; 
 					symlink(pud->sourcepic.c_str(),destpic.c_str()); 
 				}
+#endif
 			}
 			
 			// cleanup for next element
@@ -539,7 +541,6 @@ int cProcessEpg::processFile(char *filename)
             // fwrite(buffer, 1, zstat.size, fh1);
             // fclose(fh1);
         // } else {
-            fprintf(stderr, "would write jpg file %s.\n", outpic.c_str());      
 #else
 
               Image *image, *scaled_image;
