@@ -9,6 +9,7 @@
 #define _UPDATE__H
 
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <ctime>
 #include <clocale>
