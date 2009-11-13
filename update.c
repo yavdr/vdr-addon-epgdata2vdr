@@ -150,7 +150,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 								 else pud->genre = string("");
 		}
 		else if (!strcmp(name,"d26")) {
-			if (xmlStrlen(value)) {
+			if ((xmlStrlen(value) != 0) && (atol((char *)value) != 0)) {
 				pud->sequence = xmlCharStrdup("|Folge: ");
 				pud->sequence = xmlStrcat(pud->sequence,value);
 			}
@@ -189,16 +189,16 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 			else pud->attribute = xmlCharStrdup("");
 		}		
 		else if (!strcmp(name,"d32")) {
-			if (xmlStrlen(value)) {
-				pud->country = xmlCharStrdup("Land: ");
-				pud->country = xmlStrcat(pud->country,value);
+			if (xmlStrlen(value)) { 
+				pud->country = xmlStrdup(value);
+				pud->country = xmlStrcat(pud->country,(xmlChar *)" ");
 			}
 			else pud->country = xmlCharStrdup("");
 		}	
 		else if (!strcmp(name,"d33")) {
 			if (xmlStrlen(value)) {
-				pud->year = xmlCharStrdup("|Jahr: ");
-				pud->year = xmlStrcat(pud->year,value);
+				pud->year = xmlStrdup(value);
+				pud->year = xmlStrcat(pud->year,(xmlChar *)" ");
 			}
 			else pud->year = xmlCharStrdup("");
 		}		
@@ -294,14 +294,14 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				
 				if (xmlStrlen(pud->primetime) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->primetime);
 				if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->sequence);
-				if (!xmlStrlen(pud->technics_bw) ||
-					!xmlStrlen(pud->technics_co_channel) ||
-					!xmlStrlen(pud->technics_coded) ||
-					!xmlStrlen(pud->technics_blind) ||
-					!xmlStrlen(pud->technics_stereo) ||
-					!xmlStrlen(pud->technics_dolby) ||
-					!xmlStrlen(pud->technics_wide)) {
-					xmlTextWriterWriteFormatString(writer,"Techn.Det.: ");
+				if ((xmlStrlen(pud->technics_bw) > 0) ||
+					(xmlStrlen(pud->technics_co_channel) > 0) ||
+					(xmlStrlen(pud->technics_coded) > 0)  ||
+					(xmlStrlen(pud->technics_blind) > 0)  ||
+					(xmlStrlen(pud->technics_stereo) > 0) ||
+					(xmlStrlen(pud->technics_dolby) > 0)  ||
+					(xmlStrlen(pud->technics_wide) > 0) ) {
+					xmlTextWriterWriteFormatString(writer,"Technische Details: ");
 						if (xmlStrlen(pud->technics_bw) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_bw);
 						if (xmlStrlen(pud->technics_co_channel) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_co_channel);
 						if (xmlStrlen(pud->technics_vt150) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_vt150);
@@ -315,8 +315,10 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				xmlTextWriterWriteFormatString(writer,"%s",pud->age_marker);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->live);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->attribute);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->country);
+				// D 2005 45 Min.
+				xmlTextWriterWriteFormatString(writer,"%s",pud->country); 
 				xmlTextWriterWriteFormatString(writer,"%s",pud->year);
+				xmlTextWriterWriteFormatString(writer,"%d Min.|",(pud->tvshow_length/60)); 
 				xmlTextWriterWriteFormatString(writer,"%s",pud->themes);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->moderator);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->studio_guest);
