@@ -151,7 +151,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 		}
 		else if (!strcmp(name,"d26")) {
 			if ((xmlStrlen(value) != 0) && (atol((char *)value) != 0)) {
-				pud->sequence = xmlCharStrdup("|Folge: ");
+				pud->sequence = xmlCharStrdup("Folge: ");
 				pud->sequence = xmlStrcat(pud->sequence,value);
 			}
 			else pud->sequence = xmlCharStrdup("");
@@ -161,7 +161,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 								else pud->technics_stereo = xmlCharStrdup("");
 		}	
 		else if (!strcmp(name,"d28")) {
-			if (atol((char *)value)) pud->technics_dolby =  xmlCharStrdup("Dolby Digital");
+			if (atol((char *)value)) pud->technics_dolby =  xmlCharStrdup("DolbyDigital");
 								else pud->technics_dolby =  xmlCharStrdup("");
 		}
 		else if (!strcmp(name,"d29")) {
@@ -189,16 +189,20 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 			else pud->attribute = xmlCharStrdup("");
 		}		
 		else if (!strcmp(name,"d32")) {
-			if (xmlStrlen(value)) { 
-				pud->country = xmlStrdup(value);
-				pud->country = xmlStrcat(pud->country,(xmlChar *)" ");
+			if (xmlStrlen(value)) {
+				size_t size = xmlStrlen(value); // Replace "|" with "/"
+				for (size_t i = 0; i < size; ++i) {
+					if (value[i] == '|') value[i] = '/'; // Result = "USA/GB/D"
+				}
+				pud->country = xmlStrdup(value); 
+				//pud->country = xmlStrcat(pud->country,(xmlChar *)" ");
 			}
 			else pud->country = xmlCharStrdup("");
 		}	
 		else if (!strcmp(name,"d33")) {
 			if (xmlStrlen(value)) {
 				pud->year = xmlStrdup(value);
-				pud->year = xmlStrcat(pud->year,(xmlChar *)" ");
+				pud->year = xmlStrcat(pud->year,(xmlChar *)". "); // 2005.
 			}
 			else pud->year = xmlCharStrdup("");
 		}		
@@ -289,7 +293,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				} else if (pud->category.size() > 0) {
 					xmlTextWriterWriteFormatString(writer,"%s|",pud->category.c_str());
 				} else if (pud->genre.size() > 0) {
-					xmlTextWriterWriteFormatString(writer,"%s|",pud->category.c_str());
+					xmlTextWriterWriteFormatString(writer,"%s|",pud->genre.c_str());
 				}
 				
 				if (xmlStrlen(pud->primetime) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->primetime);
@@ -301,7 +305,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 					(xmlStrlen(pud->technics_stereo) > 0) ||
 					(xmlStrlen(pud->technics_dolby) > 0)  ||
 					(xmlStrlen(pud->technics_wide) > 0) ) {
-					xmlTextWriterWriteFormatString(writer,"Technische Details: ");
+					xmlTextWriterWriteFormatString(writer,"|Technische Details: ");
 						if (xmlStrlen(pud->technics_bw) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_bw);
 						if (xmlStrlen(pud->technics_co_channel) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_co_channel);
 						if (xmlStrlen(pud->technics_vt150) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_vt150);
@@ -312,11 +316,12 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 						if (xmlStrlen(pud->technics_wide) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_wide);
 					xmlTextWriterWriteFormatString(writer,"|");
 				}
-				xmlTextWriterWriteFormatString(writer,"%s",pud->age_marker);
+				if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->age_marker);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->live);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->attribute);
-				// D 2005 45 Min.
-				xmlTextWriterWriteFormatString(writer,"%s",pud->country); 
+				// D 2005. 45 Min.
+				if (xmlStrlen(pud->year) > 0) { xmlTextWriterWriteFormatString(writer,"%s ",pud->country);
+				} else if (xmlStrlen(pud->country) > 0) xmlTextWriterWriteFormatString(writer,"%s. ",pud->country); // D. 45 Min.
 				xmlTextWriterWriteFormatString(writer,"%s",pud->year);
 				xmlTextWriterWriteFormatString(writer,"%d Min.|",(pud->tvshow_length/60)); 
 				xmlTextWriterWriteFormatString(writer,"%s",pud->themes);
@@ -407,7 +412,8 @@ int cProcessEpg::processFile(string confdir , char *filename)
   string file = string(filename);
   char *dir = dirname(filename);
   string outfile = file.substr(0,file.length() -4) + ".epg";
-  user_data->picdir =  string(dir) + "/" + file.substr(file.length() -18, 8);
+  //user_data->picdir =  string(dir) + "/" + file.substr(file.length() -18, 8);
+  user_data->picdir =  string(dir) + "/images" ; // Put all images in same dir
 
   // TODO: make it more error tolerant
 #ifdef USE_IMAGEMAGICK
