@@ -58,7 +58,6 @@ for i in `seq 0 $MAXDAYS` ; do
     if [ -s $WORKDIR/files/$FILE.epg ]; then
       echo "File: $FILE already processed"
     else
-      #$UNZIP -o $WORKDIR/files/$FILE.zip *.dtd -d $WORKDIR/include
       echo -e " File: $FILE  Size: $(( $SIZE /1024 )) kB"
       # With EPG-Images
       #epgdata2vdr          includedir        epgimagesdir file(s)
