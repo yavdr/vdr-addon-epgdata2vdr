@@ -48,7 +48,7 @@ for i in `seq 0 $MAXDAYS` ; do
       rm $WORKDIR/files/$FILE.epg > /dev/null 2>&1
     else
       if [ `ls -la $WORKDIR/files/$FILE.zip | cut -d" " -f5` != $SIZE  ]; then
-        $CURLBIN "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" -o $WORKDIR/files/$FILE.zip
+        nice -n 19 $CURLBIN "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" -o $WORKDIR/files/$FILE.zip
         rm $WORKDIR/files/$FILE.epg > /dev/null 2>&1
       else
         echo "File: $FILE already downloaded"
