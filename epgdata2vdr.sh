@@ -2,6 +2,9 @@
 
 . /etc/vdr/vdr-addon-epgdata2vdr.conf
 
+EPGDATABIN=/usr/bin/epgdata2vdr
+SVDRPSENDBIN=/usr/bin/svdrpsend
+
 # install required files if necessary & create directories
 if [ ! -d $WORKDIR/include ]; then 
    mkdir -p $WORKDIR/include 
@@ -47,8 +50,8 @@ for i in `seq 0 $MAXDAYS` ; do
     else
       unzip -o $WORKDIR/files/$FILE.zip *.dtd -d $WORKDIR/include
       echo -e " File: $FILE  Size: $(( $SIZE /1024 )) kB"
-      LANG=de_DE.utf8 nice -19 epgdata2vdr $WORKDIR/include/ $WORKDIR/files/$FILE.zip > $WORKDIR/files/$FILE.epg
-      svdrpsend PUTE ${PUTECHAR}$WORKDIR/files/$FILE.epg
+      $EPGDATABIN $WORKDIR/include/ $WORKDIR/files/$FILE.zip > $WORKDIR/files/$FILE.epg
+      $SVDRPSENDBIN PUTE ${PUTECHAR}$WORKDIR/files/$FILE.epg
     fi
   fi
   rm $TMP
@@ -68,7 +71,9 @@ fi
 
 
 # Delete old EPG-Images
-find $WORKDIR/files/images/* -type f -mtime +$MAXDAYS -print0 | xargs -0 rm -f
+if [ -e $WORKDIR/files/images/ ]; then 
+   find $WORKDIR/files/images/* -type f -mtime +$MAXDAYS -print0 | xargs -0 rm -f
+fi 
 # Also delete old symlinks (-L only broken symlinks)
 [ -n $EPGIMAGES ] && find -L $EPGIMAGES/* -type l -delete
 

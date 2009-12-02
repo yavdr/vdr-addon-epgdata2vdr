@@ -201,7 +201,6 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 		else if (!strcmp(name,"d33")) {
 			if (xmlStrlen(value)) {
 				pud->year = xmlStrdup(value);
-				pud->year = xmlStrcat(pud->year,(xmlChar *)"."); // 2005.
 			}
 			else pud->year = xmlCharStrdup("");
 		}		
@@ -299,10 +298,13 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 				} else if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->sequence);
 				if (xmlStrlen(pud->primetime) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->primetime);
 
-				// D 2005. 45 Min.
-				if (xmlStrlen(pud->year) > 0) { xmlTextWriterWriteFormatString(writer,"|%s ",pud->country);
-				} else if (xmlStrlen(pud->country) > 0) xmlTextWriterWriteFormatString(writer,"|%s.",pud->country); // D. 45 Min.
-				xmlTextWriterWriteFormatString(writer,"%s",pud->year);
+				if (xmlStrlen(pud->year) > 0 && xmlStrlen(pud->country) > 0) {
+					xmlTextWriterWriteFormatString(writer,"|%s %s.",pud->country, pud->year);  // D 2005. 45 Min.
+				} else if (xmlStrlen(pud->country) > 0) {
+					xmlTextWriterWriteFormatString(writer,"|%s.",pud->country); // D. 45 Min.
+				} else if (xmlStrlen(pud->year) > 0 ) {
+					xmlTextWriterWriteFormatString(writer,"|%s.",pud->year); // 2005. 45 Min.
+				}
 				if (xmlStrlen(pud->country) > 0 || xmlStrlen(pud->year) > 0) xmlTextWriterWriteFormatString(writer," %d Min.",(pud->tvshow_length/60));
 				else xmlTextWriterWriteFormatString(writer,"|%d Min.",(pud->tvshow_length/60));
 
