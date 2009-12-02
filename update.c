@@ -12,7 +12,7 @@ cProcessEpg::cProcessEpg()
 {
   LIBXML_TEST_VERSION
 #ifdef USE_IMAGEMAGICK
-  InitializeMagick("vdr-plugin-tvm2vdr");
+  InitializeMagick("epgdata2vdr-im");
 #endif
 }
 
@@ -324,7 +324,6 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 						if (xmlStrlen(pud->technics_stereo) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_stereo);
 						if (xmlStrlen(pud->technics_dolby) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_dolby);
 						if (xmlStrlen(pud->technics_wide) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_wide);
-					//xmlTextWriterWriteFormatString(writer,"|");
 				}
 				if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->age_marker);
 				if (xmlStrlen(pud->live) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->live);
@@ -484,7 +483,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
 		}
 		
 		// initialize the reader 
-		reader = xmlReaderForMemory(buffer, zstat.size,confdir.c_str() ,"iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);  // TODO
+		reader = xmlReaderForMemory(buffer, zstat.size,confdir.c_str() ,"iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD);  
 		if (reader != NULL)	{
 	        parseretval = xmlTextReaderRead(reader);
 	        while (parseretval == 1) {
@@ -527,7 +526,10 @@ int cProcessEpg::processFile(string confdir , char *filename)
 		else fprintf(stderr, "Unable to get xml\n");
     }
 	// export the pictures
-		if (!strcmp(fname + strlen(fname) - 4, ".jpg")) {
+		string outpic = user_data->picdir + "/" + string(fname).substr(0,string(fname).length() -4) + ".png";
+		struct stat pic;
+                if ( !stat(outpic.c_str(), &pic) == 0) {
+		 if (!strcmp(fname + strlen(fname) - 4, ".jpg")) {
 		  if (zip_stat_index(pzip, zipfilenum, 0, &zstat)) {
 			fprintf(stderr, "error: can't get stat for %s\n", fname);
 			return -4;
@@ -547,10 +549,8 @@ int cProcessEpg::processFile(string confdir , char *filename)
 		  };
 		  zip_fclose(zfile);
 		
-		string outpic = user_data->picdir + "/" + string(fname).substr(0,string(fname).length() -4) + ".png";
 		
 #ifdef USE_IMAGEMAGICK
-
               Image *image, *scaled_image;
               ImageInfo *image_info;
               ExceptionInfo *exception;
@@ -559,6 +559,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
                 fprintf(stderr,"can't AcquireMagickMemory");
                 return -4;
               }
+	      fprintf(stderr, "Processing %s\n", outpic.c_str());
               GetExceptionInfo(exception);
 
               image_info = CloneImageInfo((ImageInfo *) NULL);
@@ -581,6 +582,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
               DestroyImageInfo(image_info);
               DestroyExceptionInfo(exception);
 #endif
+                }
 		}
 	// extract the dtd
 		if (!strcmp(fname + strlen(fname) - 4, ".dtd")) {
