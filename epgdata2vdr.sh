@@ -1,19 +1,28 @@
 #!/bin/bash
 
-. /etc/vdr/addons/epgdata2vdr.conf
+. /etc/vdr/vdr-addon-epgdata2vdr.conf
 
-# install required files if necessary
+# install required files if necessary & create directories
 if [ ! -d $WORKDIR/include ]; then 
    mkdir -p $WORKDIR/include 
    if [ x$? != x0 ]; then 
       echo "$WORKDIR/include exists but is not a directory"
       exit 1
    else 
+    if [ -n "$PIN" ]; then 
       curl "http://www.epgdata.com/index.php?action=sendInclude&iOEM=&pin=$PIN&dataType=xml" \
            -o $WORKDIR/include/include.zip
       unzip -o $WORKDIR/include/include.zip -d $WORKDIR/include
-fi 
+    else
+      echo "epgdata.com PIN is not configured"
+      exit 1
+    fi
+fi
+if [ ! -d $WORKDIR/files ]; then 
+   mkdir -p $WORKDIR/files
+fi
 
+if [ -n "$PIN" ]; then
 for i in `seq 0 $MAXDAYS` ; do
   TMP=`mktemp`
   nice -19 curl -I -D $TMP "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" &> /dev/null
@@ -51,6 +60,12 @@ for i in `find $WORKDIR/files/* -name "*$SUFFIX.zip" | cut -d"_" -f2 | sort -r |
  rm -f $WORKDIR/files/*$i$SUFFIX.epg
  rm -f $WORKDIR/files/*$i$SUFFIX.zip
 done
+
+else
+  echo "epgdata.com PIN is not configured"
+  exit 1
+fi
+
 
 # Delete old EPG-Images
 find $WORKDIR/files/images/* -type f -mtime +$MAXDAYS -print0 | xargs -0 rm -f

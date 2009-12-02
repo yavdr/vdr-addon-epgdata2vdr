@@ -195,14 +195,13 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 					if (value[i] == '|') value[i] = '/'; // Result = "USA/GB/D"
 				}
 				pud->country = xmlStrdup(value); 
-				//pud->country = xmlStrcat(pud->country,(xmlChar *)" ");
 			}
 			else pud->country = xmlCharStrdup("");
 		}	
 		else if (!strcmp(name,"d33")) {
 			if (xmlStrlen(value)) {
 				pud->year = xmlStrdup(value);
-				pud->year = xmlStrcat(pud->year,(xmlChar *)". "); // 2005.
+				pud->year = xmlStrcat(pud->year,(xmlChar *)"."); // 2005.
 			}
 			else pud->year = xmlCharStrdup("");
 		}		
@@ -284,20 +283,29 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 							fprintf(stderr, "unknown tipflag: %d !\n", pud->tip);
 					}
 				if (xmlStrlen(pud->comment_short) != xmlStrlen(pud->comment_long) && xmlStrlen(pud->comment_short) > 0 ){
-					xmlTextWriterWriteFormatString(writer,"Zusammenfassung: %s ||", pud->comment_short);
+					xmlTextWriterWriteFormatString(writer,"Zusammenfassung: %s||", pud->comment_short);
 				}
-				if (xmlStrlen(pud->comment_long) > 0) xmlTextWriterWriteFormatString(writer,"%s|", pud->comment_long);
+				if (xmlStrlen(pud->comment_long) > 0) xmlTextWriterWriteFormatString(writer,"%s", pud->comment_long);
 				
 				if (pud->category.size() > 0 && pud->genre.size() > 0) {
-					xmlTextWriterWriteFormatString(writer,"%s - %s|",pud->category.c_str(), pud->genre.c_str());
+					xmlTextWriterWriteFormatString(writer,"|%s - %s",pud->category.c_str(), pud->genre.c_str());
 				} else if (pud->category.size() > 0) {
-					xmlTextWriterWriteFormatString(writer,"%s|",pud->category.c_str());
+					xmlTextWriterWriteFormatString(writer,"|%s",pud->category.c_str());
 				} else if (pud->genre.size() > 0) {
-					xmlTextWriterWriteFormatString(writer,"%s|",pud->genre.c_str());
+					xmlTextWriterWriteFormatString(writer,"|%s",pud->genre.c_str());
 				}
-				
-				if (xmlStrlen(pud->primetime) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->primetime);
-				if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->sequence);
+				if (pud->category.size() > 0 || pud->genre.size() > 0) { // Put secuence after category - genre
+					if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,", %s",pud->sequence);
+				} else if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->sequence);
+				if (xmlStrlen(pud->primetime) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->primetime);
+
+				// D 2005. 45 Min.
+				if (xmlStrlen(pud->year) > 0) { xmlTextWriterWriteFormatString(writer,"|%s ",pud->country);
+				} else if (xmlStrlen(pud->country) > 0) xmlTextWriterWriteFormatString(writer,"|%s.",pud->country); // D. 45 Min.
+				xmlTextWriterWriteFormatString(writer,"%s",pud->year);
+				if (xmlStrlen(pud->country) > 0 || xmlStrlen(pud->year) > 0) xmlTextWriterWriteFormatString(writer," %d Min.",(pud->tvshow_length/60));
+				else xmlTextWriterWriteFormatString(writer,"|%d Min.",(pud->tvshow_length/60));
+
 				if ((xmlStrlen(pud->technics_bw) > 0) ||
 					(xmlStrlen(pud->technics_co_channel) > 0) ||
 					(xmlStrlen(pud->technics_coded) > 0)  ||
@@ -314,16 +322,11 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 						if (xmlStrlen(pud->technics_stereo) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_stereo);
 						if (xmlStrlen(pud->technics_dolby) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_dolby);
 						if (xmlStrlen(pud->technics_wide) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_wide);
-					xmlTextWriterWriteFormatString(writer,"|");
+					//xmlTextWriterWriteFormatString(writer,"|");
 				}
-				if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"%s|",pud->age_marker);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->live);
-				xmlTextWriterWriteFormatString(writer,"%s",pud->attribute);
-				// D 2005. 45 Min.
-				if (xmlStrlen(pud->year) > 0) { xmlTextWriterWriteFormatString(writer,"%s ",pud->country);
-				} else if (xmlStrlen(pud->country) > 0) xmlTextWriterWriteFormatString(writer,"%s. ",pud->country); // D. 45 Min.
-				xmlTextWriterWriteFormatString(writer,"%s",pud->year);
-				xmlTextWriterWriteFormatString(writer,"%d Min.|",(pud->tvshow_length/60)); 
+				if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->age_marker);
+				if (xmlStrlen(pud->live) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->live);
+				if (xmlStrlen(pud->attribute) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->attribute);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->themes);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->moderator);
 				xmlTextWriterWriteFormatString(writer,"%s",pud->studio_guest);
@@ -412,7 +415,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
   string file = string(filename);
   char *dir = dirname(filename);
   string outfile = file.substr(0,file.length() -4) + ".epg";
-  //user_data->picdir =  string(dir) + "/" + file.substr(file.length() -18, 8);
   user_data->picdir =  string(dir) + "/images" ; // Put all images in same dir
 
   // TODO: make it more error tolerant
