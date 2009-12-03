@@ -26,7 +26,7 @@ install:
 	install -d -m 755 $(DESTDIR)/var/cache/vdr/epgdata2vdr/files/
 	install -m 660 epgdata2vdr_channelmap.conf $(DESTDIR)/var/cache/vdr/epgdata2vdr/include/
 	install -d $(DESTDIR)/etc/vdr
-	install -m 660 epgdata2vdr.conf $(DESTDIR)/etc/vdr/vdr-addon-epgdata2vdr.conf
+	install -m 660 epgdata2vdr.conf $(DESTDIR)/etc/vdr/epgdata2vdr.conf
 
 uninstall: 
 	@rm -rf $(DESTDIR)/var/cache/vdr/epgdata2vdr/include/

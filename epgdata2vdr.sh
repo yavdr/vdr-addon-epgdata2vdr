@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /etc/vdr/vdr-addon-epgdata2vdr.conf
+. /etc/vdr/epgdata2vdr.conf
 
 # only change if you know what you are doing
 EPGDATA2VDRBIN=/usr/bin/epgdata2vdr
