@@ -22,8 +22,8 @@ install:
 	install -m 750 epgdata2vdr $(DESTDIR)/usr/bin/
 	install -m 750 epgdata2vdr.sh $(DESTDIR)/usr/bin/
 	install -m 750 epgdata-update.cron-daily $(DESTDIR)/etc/cron.daily/epgdata2vdr-update
-	install -d -m 750 $(DESTDIR)/var/cache/vdr/epgdata2vdr/include/
-	install -d -m 750 $(DESTDIR)/var/cache/vdr/epgdata2vdr/files/
+	install -d -m 755 $(DESTDIR)/var/cache/vdr/epgdata2vdr/include/
+	install -d -m 755 $(DESTDIR)/var/cache/vdr/epgdata2vdr/files/
 	install -m 660 epgdata2vdr_channelmap.conf $(DESTDIR)/var/cache/vdr/epgdata2vdr/include/
 	install -d $(DESTDIR)/etc/vdr
 	install -m 660 epgdata2vdr.conf $(DESTDIR)/etc/vdr/vdr-addon-epgdata2vdr.conf
