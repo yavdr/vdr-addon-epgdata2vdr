@@ -9,7 +9,7 @@ svdrpsend.pl plug epgsearch SETS off
 sleep 1
 
 echo -n "`date`  " >> /var/log/epg-update
-/usr/bin/epgdata2vdr.sh >> /var/log/epg-update
+su -c '/usr/bin/epgdata2vdr.sh >> /var/log/epg-update' vdr
 
 sleep 1
 

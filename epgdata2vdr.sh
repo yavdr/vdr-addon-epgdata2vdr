@@ -18,7 +18,7 @@ if [ ! -d $WORKDIR/files ]; then
    mkdir -p $WORKDIR/files
 fi
 
-if [ ! -d $WORKDIR/include -o ! -e $WORKDIR/include/chanel*.xml ]; then 
+if [ ! -e $WORKDIR/include/genre.xml -o ! -e $WORKDIR/include/category.xml ]; then 
    mkdir -p $WORKDIR/include 
    if [ x$? != x0 ]; then 
       echo "$WORKDIR/include exists but is not a directory"
