@@ -14,6 +14,11 @@ if [ ! -n "$WORKDIR" ]; then
    exit 1 
 fi 
 
+if [ ! -e $WORKDIR/include/epgdata2vdr_channelmap.conf ]; then
+   echo "epgdata2vdr_channelmap.conf not found. Stopping."
+   exit 1
+fi
+
 if [ ! -d $WORKDIR/files ]; then
    mkdir -p $WORKDIR/files
 fi
