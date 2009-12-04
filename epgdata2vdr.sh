@@ -80,12 +80,9 @@ else
   exit 1
 fi
 
-
 # Delete old EPG-Images
 if [ -e $WORKDIR/files/images/ ]; then 
    find $WORKDIR/files/images/* -type f -mtime +$MAXDAYS -print0 | xargs -0 rm -f
 fi 
 # Also delete old symlinks (-L only broken symlinks)
-[ -n $EPGIMAGES ] && find -L $EPGIMAGES/* -type l -delete &> /dev/null
-
-
+[ -n "$EPGIMAGES" ] && find -L $EPGIMAGES/* -type l -delete &> /dev/null
