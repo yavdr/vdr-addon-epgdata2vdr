@@ -64,7 +64,7 @@ for i in `seq 0 $MAXDAYS` ; do
     else
       echo -e " File: $FILE  Size: $(( $SIZE /1024 )) kB"
       #epgdata2vdr includedir epgimagesdir file(s)
-      $EPGDATA2VDRBIN $WORKDIR/include/ $EPGIMAGES $WORKDIR/files/$FILE.zip > $WORKDIR/files/$FILE.epg
+      $EPGDATA2VDRBIN $WORKDIR/include/ $EPGIMAGES $WORKDIR/files/$FILE.zip
       $SVDRPSENDBIN PUTE ${PUTECHAR}$WORKDIR/files/$FILE.epg
     fi
   fi
