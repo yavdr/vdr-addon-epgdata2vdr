@@ -81,7 +81,7 @@ int cDataMap::processData(xmlTextReaderPtr reader)
 	int retval;
 	
 	// get name, type and depth in the xml structure
-    string name = string((char *)xmlTextReaderConstName(reader));
+        string name = string((char *)xmlTextReaderConstName(reader));
 
 	int type = xmlTextReaderNodeType(reader) ;
 	int depth = xmlTextReaderDepth(reader) ;
@@ -127,7 +127,7 @@ int cDataMap::processData(xmlTextReaderPtr reader)
 
 string cDataMap::GetStr(int dataid)
 {
-	return datamap[dataid];
+        return datamap[dataid];
 }
 
 

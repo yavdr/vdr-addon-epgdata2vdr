@@ -94,9 +94,9 @@ public:
 	cChannelMap *chanmap;
 	cDataMap *datamap;
 	int processFile(string confdir, char *filename);
-    void readMaps(string confdir) ; 
+        void readMaps(string confdir) ; 
 	string confdir ;
-	string epgimagesdir;
+	string epgimagesdir ;
 };
 
 #endif

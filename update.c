@@ -80,7 +80,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
                 else pud->primetime = xmlCharStrdup("");
     }
     else if (!strcmp(name,"d10")) {
-      if (atol((char *)value)) pud->category = cProcessEpg::datamap->GetStr(atol((char *)value));
+      if (atol((char *)value)) pud->category = cProcessEpg::datamap->GetStr(atoi((char *)value));
                 else pud->category = string("");
     }
     else if (!strcmp(name,"d11")) {
@@ -192,7 +192,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
       if (xmlStrlen(value)) {
         size_t size = xmlStrlen(value); // Replace "|" with "/"
         for (size_t i = 0; i < size; ++i) {
-          if (value[i] == '|') value[i] = '/'; // Result = "USA/GB/D"
+            if (value[i] == '|') value[i] = '/'; // Result = "USA/GB/D"
         }
         pud->country = xmlStrdup(value); 
       }
@@ -239,8 +239,6 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         pud->sourcepic = pic.substr(0,pic.length() - 4) + ".png" ; 
       }
     }
-    
-
     xmlFree(value); 
     value = NULL ; 
   }
@@ -474,8 +472,8 @@ int cProcessEpg::processFile(string confdir , char *filename)
         } else {
            fprintf(stderr, "could not write dtd file to confdir.\n");
         }
+	free(buffer); buffer = NULL;
      } // if dtd 
-     free(buffer); buffer = NULL;
   } // loop through zip file for dtd
 
 #ifdef USE_IMAGEMAGICK  
@@ -537,7 +535,8 @@ int cProcessEpg::processFile(string confdir , char *filename)
              DestroyImage(scaled_image);
              DestroyImageInfo(image_info);
              DestroyExceptionInfo(exception);
-     }
+             free(buffer); buffer = NULL;
+         }
      }
   } // loop through zip file for pictures
 #endif
@@ -623,6 +622,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
             }
         } 
         else fprintf(stderr, "Unable to get xml\n");
+	free(buffer); buffer = NULL;
     } // if xml 
   } // loop through zip file for xml
   
