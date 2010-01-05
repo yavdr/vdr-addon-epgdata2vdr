@@ -1,0 +1,93 @@
+#!/bin/bash
+#
+
+. /etc/vdr/epgdata2vdr.conf
+
+EPGDATA2VDR_CHANNELS=$WORKDIR/include/epgdata2vdr_channelmap.conf
+CHANNELS_CONF=/etc/vdr/channels.conf
+CHANNEL_XML=$WORKDIR/include/channel_y.xml
+CHANNEL_CH0=/tmp/channel_CH0.info
+CHANNEL_CH4=/tmp/channel_CH4.info
+CHANNEL_CH11=/tmp/channel_CH11.info
+CHANNEL_INFO=/tmp/channel.info
+CHANNEL_INFO_SORT=/tmp/channel.info.sort
+
+rm $EPGDATA2VDR_CHANNELS > /dev/null 2>&1
+
+cat $CHANNEL_XML | grep "<ch0>" | cut -d'>' -f2 | cut -d'<' -f1 > $CHANNEL_CH0
+cat $CHANNEL_XML | grep "<ch4>" | cut -d'>' -f2 | cut -d'<' -f1 > $CHANNEL_CH4
+cat $CHANNEL_XML | grep "<ch11>" | cut -d'>' -f2 | cut -d'<' -f1 > $CHANNEL_CH11
+
+Kanal_Auswahl()
+{
+  sort -u $CHANNEL_INFO > $CHANNEL_INFO_SORT
+  if [ $(wc -l <$CHANNEL_INFO_SORT) -eq 1 ]; then
+    EINGABE=`cat $CHANNEL_INFO_SORT | cut -d'	' -f1`
+    echo 
+    echo "Zuordnung für Kanal \"$CHANNELNAME\""
+    cat $CHANNEL_INFO_SORT
+  else
+    echo 
+    echo "Zuordnung für Kanal \"$CHANNELNAME\""
+    cat $CHANNEL_INFO_SORT
+    echo -n "Auswahl (Nummer) (Enter übergeht): "; read EINGABE
+  fi
+
+  for AUSWAHL in $EINGABE; do
+    cat -n $CHANNELS_CONF | cut -d'	' -f1 | grep "$AUSWAHL" > /dev/null 2>&1
+    if [ $? -eq 1 ]; then
+      echo "$AUSWAHL: falsche Eingabe"
+      return 1
+    fi
+  done
+}
+
+NUMMER=1
+
+while [ $NUMMER -le $(wc -l <$CHANNEL_CH11) ]; do
+   CHANNELNAME=`head -n $NUMMER $CHANNEL_CH11 | tail -n1`
+   cat $CHANNELS_CONF | cut -d ';' -f1 | grep -i -n -T "$CHANNELNAME" \
+     > $CHANNEL_INFO
+   CHANNELNAME=`head -n $NUMMER $CHANNEL_CH0 | tail -n1`
+   cat $CHANNELS_CONF | cut -d ';' -f1 | grep -i -n -T "$CHANNELNAME" \
+     >> $CHANNEL_INFO
+
+   unset CHANNEL_IDS
+   EPGDATA_NUM=`head -n $NUMMER $CHANNEL_CH4 | tail -n1`
+
+   if [ $(wc -l <$CHANNEL_INFO) -gt 0 ]; then
+     while ! Kanal_Auswahl; do
+       /bin/true
+     done
+
+     for AUSWAHL in $EINGABE; do
+       NAME=`head -n $AUSWAHL $CHANNELS_CONF | tail -n1 | cut -d':' -f1`
+       SOURCE=`head -n $AUSWAHL $CHANNELS_CONF | tail -n1 | cut -d':' -f4`
+       NID=`head -n $AUSWAHL $CHANNELS_CONF | tail -n1 | cut -d':' -f11`
+       TID=`head -n $AUSWAHL $CHANNELS_CONF | tail -n1 | cut -d':' -f12`
+       SID=`head -n $AUSWAHL $CHANNELS_CONF | tail -n1 | cut -d':' -f10`
+
+       if [ -z "$CHANNEL_IDS" ]; then
+         CHANNEL_IDS="$SOURCE-$NID-$TID-$SID"
+       else
+         CHANNEL_IDS="$CHANNEL_IDS,$SOURCE-$NID-$TID-$SID"
+       fi
+     done
+   fi
+
+   if [ -z "$CHANNEL_IDS" ]; then
+     echo "// $EPGDATA_NUM =				// $CHANNELNAME" \
+       >> $EPGDATA2VDR_CHANNELS
+   else
+     echo "$EPGDATA_NUM = $CHANNEL_IDS		// $NAME" \
+       >> $EPGDATA2VDR_CHANNELS
+   fi
+
+   NUMMER=$((NUMMER + 1))
+done 
+
+rm $CHANNEL_CH0
+rm $CHANNEL_CH4
+rm $CHANNEL_CH11
+rm $CHANNEL_INFO
+rm $CHANNEL_INFO_SORT

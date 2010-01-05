@@ -440,11 +440,12 @@ int cProcessEpg::processFile(string confdir , char *filename)
   // extract the dtd
   for (zipfilenum = 0; zipfilenum < num_files; zipfilenum++) { 
      if ((fname = zip_get_name(pzip, zipfilenum, 0)) == NULL) { // get the filename
-  fprintf(stderr, "error: can't get filename for index %d\n", zipfilenum);
-  return -3;
+         fprintf(stderr, "error: can't get filename for index %d\n", zipfilenum);
+         return -3;
      }
 
      if (!strcmp(fname + strlen(fname) - 4, ".dtd")) {
+        string dtdname = confdir + string(fname);
         if (zip_stat_index(pzip, zipfilenum, 0, &zstat)) {
            fprintf(stderr, "error: can't get stat for %s\n", fname);
            return -4;
@@ -460,11 +461,10 @@ int cProcessEpg::processFile(string confdir , char *filename)
 
         // fill buffer from dtd
         if (zip_fread(zfile, buffer, zstat.size) == -1 ) {
-           fprintf(stderr, "could not extract dtd file from %s.\n", outfile.c_str());
+           fprintf(stderr, "could not extract dtd file from %s.\n", dtdname.c_str());
         };
         zip_fclose(zfile);
 
-        string dtdname = confdir + string(fname);
         FILE *fh1 = NULL;
         if ((fh1 = fopen(dtdname.c_str(), "w"))) {
            fwrite(buffer, 1, zstat.size, fh1);
