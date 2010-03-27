@@ -7,6 +7,7 @@ EPGDATA2VDRBIN=/usr/bin/epgdata2vdr
 SVDRPSENDBIN=/usr/bin/svdrpsend
 CURLBIN=/usr/bin/curl
 UNZIPBIN=/usr/bin/unzip
+SENDMAIL=/usr/sbin/sendmail
 
 # install required files if necessary + create directories
 if [ ! -n "$WORKDIR" ]; then 
@@ -40,15 +41,26 @@ if [ ! -e $WORKDIR/include/genre.xml -o ! -e $WORKDIR/include/category.xml ]; th
    fi
 fi
 
+# Delete old EPG-Images
+if [ -e $WORKDIR/files/images/ ]; then
+   find $WORKDIR/files/images/* -type f -mtime +$MAXDAYS -print0 | xargs -0 rm -f
+fi
+# Also delete old symlinks (-L only broken symlinks)
+[ -n "$EPGIMAGES" ] && find -L $EPGIMAGES/* -type l -delete &> /dev/null
+
+# process data
 for i in `seq 0 $MAXDAYS` ; do
+	echo "<--- Processing data with offset $i --->"
   TMP=`mktemp`
-  $CURLBIN -I -D $TMP "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" &> /dev/null
+  nice -n 19 $CURLBIN -I -D $TMP "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" &> /dev/null
   FILE=`grep -e "^Content-disposition.*$" $TMP | sed -e ' s/\r//g' | cut -d"=" -f2`
+  [ -z $TIMEOUT ] && TIMEOUT=`grep -e "^x-epgdata-timeout.*$" $TMP | sed -e ' s/\r//g' | cut -d":" -f2` # end of subscription
+  [ -z $LEFT ] && LEFT=$((( $TIMEOUT - $(date +%s)) / 60 / 60 / 24 )) # how many days are left
   FILE="`basename $FILE .zip`"
-  SIZE=`grep -e "^Content-Length.*$" $TMP  | sed -e ' s/\r//g' | cut -d":" -f2`
+  SIZE=`grep -e "^Content-Length.*$" $TMP | sed -e ' s/\r//g' | cut -d":" -f2`
   if [ ! -z $SIZE ]; then
     if [ ! -e $WORKDIR/files/$FILE.zip ]; then
-      $CURLBIN "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" -o $WORKDIR/files/$FILE.zip
+      nice -n 19 $CURLBIN "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" -o $WORKDIR/files/$FILE.zip
       rm $WORKDIR/files/$FILE.epg > /dev/null 2>&1
     else
       if [ `ls -la $WORKDIR/files/$FILE.zip | cut -d" " -f5` != $SIZE  ]; then
@@ -71,6 +83,19 @@ for i in `seq 0 $MAXDAYS` ; do
   rm $TMP
 done
 
+# Send mail if account is near to the end
+if [ $LEFT -lt 5 ] && [ -n "$EMAIL" ]; then #to enable set $EMAIL in your conf
+	echo "From: \"EPGData2VDR-Skript\"<$EMAIL>" > /tmp/mail.txt
+	echo "T0: $EMAIL" >> /tmp/mail.txt
+	echo "Subject: EPGData.com Abo endet in $LEFT Tagen!" >> /tmp/mail.txt
+	echo "" >> /tmp/mail.txt
+	echo "Das Abo bei EPGData.com hat noch eine Laufzeit von $LEFT tagen" >> /tmp/mail.txt
+	echo "und endet danach automatisch! Ein neues Abo kann unter" >> /tmp/mail.txt
+	echo "http://www.epgdata.com/index.php?action=newSubscription&iLang=de&iOEM=vdr&iCountry=de&popup=0" >> /tmp/mail.txt
+	echo "abgeschlossen werden." >> /tmp/mail.txt
+	$SENDMAIL $EMAIL < /tmp/mail.txt
+fi
+
 echo -n "Cleanup old files ... "
 for i in `find $WORKDIR/files/* -name "*$SUFFIX.zip" | cut -d"_" -f2 | sort -r | uniq | tail  -n +2` ; do
  echo "Cleanup files of : $i "
@@ -78,9 +103,3 @@ for i in `find $WORKDIR/files/* -name "*$SUFFIX.zip" | cut -d"_" -f2 | sort -r |
  rm -f $WORKDIR/files/*$i$SUFFIX.zip
 done
 
-# Delete old EPG-Images
-if [ -e $WORKDIR/files/images/ ]; then 
-   find $WORKDIR/files/images/* -type f -mtime +$MAXDAYS -print0 | xargs -0 rm -f
-fi 
-# Also delete old symlinks (-L only broken symlinks)
-[ -n "$EPGIMAGES" ] && find -L $EPGIMAGES/* -type l -delete &> /dev/null
