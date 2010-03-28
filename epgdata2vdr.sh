@@ -84,6 +84,8 @@ for i in `seq 0 $MAXDAYS` ; do
       	#epgdata2vdr includedir epgimagesdir file(s)
       	$EPGDATA2VDRBIN $WORKDIR/include/ $EPGIMAGES $WORKDIR/files/$FILE.zip
       	$SVDRPSENDBIN PUTE ${PUTECHAR}$WORKDIR/files/$FILE.epg
+      else
+        echo "File: Failed to load $FILE"
 			fi
     fi
   fi
