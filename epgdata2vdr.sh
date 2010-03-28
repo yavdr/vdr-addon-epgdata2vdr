@@ -8,6 +8,7 @@ SVDRPSENDBIN=/usr/bin/svdrpsend
 CURLBIN=/usr/bin/curl
 UNZIPBIN=/usr/bin/unzip
 SENDMAIL=/usr/sbin/sendmail
+WC=/bin/wc
 
 # install required files if necessary + create directories
 if [ ! -n "$WORKDIR" ]; then 
@@ -50,7 +51,7 @@ fi
 
 # process data
 for i in `seq 0 $MAXDAYS` ; do
-	echo "<--- Processing data with offset $i --->"
+  echo "<--- Processing data with offset $i --->"
   TMP=`mktemp`
   nice -n 19 $CURLBIN -I -D $TMP "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" &> /dev/null
   FILE=`grep -e "^Content-disposition.*$" $TMP | sed -e ' s/\r//g' | cut -d"=" -f2`
@@ -58,6 +59,10 @@ for i in `seq 0 $MAXDAYS` ; do
   [ -z $LEFT ] && LEFT=$((( $TIMEOUT - $(date +%s)) / 60 / 60 / 24 )) # how many days are left
   FILE="`basename $FILE .zip`"
   SIZE=`grep -e "^Content-Length.*$" $TMP | sed -e ' s/\r//g' | cut -d":" -f2`
+  [ -z $TIMEOUT ] && TIMEOUT=`grep -e "^x-epgdata-timeout.*$" $TMP | sed -e ' s/\r//g' | cut -d":" -f2`
+	if [ -z $LEFT ] && [ -n "$TIMEOUT" ]; then
+		LEFT=$((( $TIMEOUT - $(date +%s)) / 60 / 60 / 24 ))
+	fi
   if [ ! -z $SIZE ]; then
     if [ ! -e $WORKDIR/files/$FILE.zip ]; then
       nice -n 19 $CURLBIN "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" -o $WORKDIR/files/$FILE.zip
@@ -74,17 +79,28 @@ for i in `seq 0 $MAXDAYS` ; do
     if [ -s $WORKDIR/files/$FILE.epg ]; then
       echo "File: $FILE already processed"
     else
-      echo -e " File: $FILE  Size: $(( $SIZE /1024 )) kB"
-      #epgdata2vdr includedir epgimagesdir file(s)
-      $EPGDATA2VDRBIN $WORKDIR/include/ $EPGIMAGES $WORKDIR/files/$FILE.zip
-      $SVDRPSENDBIN PUTE ${PUTECHAR}$WORKDIR/files/$FILE.epg
+      if [ -e $WORKDIR/files/$FILE.zip ]; then
+      	echo -e " File: $FILE  Size: $(( $SIZE /1024 )) kB"
+      	#epgdata2vdr includedir epgimagesdir file(s)
+      	$EPGDATA2VDRBIN $WORKDIR/include/ $EPGIMAGES $WORKDIR/files/$FILE.zip
+      	$SVDRPSENDBIN PUTE ${PUTECHAR}$WORKDIR/files/$FILE.epg
+			fi
     fi
   fi
   rm $TMP
 done
 
-# Send mail if account is near to the end
+# Delete all but last set
+echo -n "Cleanup old files ... "
+for i in `find $WORKDIR/files/* -name "*$SUFFIX.zip" | cut -d"_" -f2 | sort -r | uniq | tail  -n +2` ; do
+ echo "Cleanup files of : $i "
+ rm -f $WORKDIR/files/*$i$SUFFIX.epg
+ rm -f $WORKDIR/files/*$i$SUFFIX.zip
+done
+
+# Send mail if subscription is near to the end
 if [ $LEFT -lt 5 ] && [ -n "$EMAIL" ]; then #to enable set $EMAIL in your conf
+	echo "<--- Sending email about ending subscription --->"
 	echo "From: \"EPGData2VDR-Skript\"<$EMAIL>" > /tmp/mail.txt
 	echo "T0: $EMAIL" >> /tmp/mail.txt
 	echo "Subject: EPGData.com Abo endet in $LEFT Tagen!" >> /tmp/mail.txt
@@ -96,10 +112,21 @@ if [ $LEFT -lt 5 ] && [ -n "$EMAIL" ]; then #to enable set $EMAIL in your conf
 	$SENDMAIL $EMAIL < /tmp/mail.txt
 fi
 
-echo -n "Cleanup old files ... "
-for i in `find $WORKDIR/files/* -name "*$SUFFIX.zip" | cut -d"_" -f2 | sort -r | uniq | tail  -n +2` ; do
- echo "Cleanup files of : $i "
- rm -f $WORKDIR/files/*$i$SUFFIX.epg
- rm -f $WORKDIR/files/*$i$SUFFIX.zip
-done
+# check if all files could be loaded (only works if MAXDAYS is less than 14)
+NUMFILES=$(($(ls $WORKDIR/files/*.zip | wc -l)))
+if [ $NUMFILES -ne $(($MAXDAYS +1)) ] && [ -n "$EMAIL" ] && [ $MAXDAYS -lt 14 ]; then #to enable set $EMAIL in your conf
+	echo "<--- Sending email about missing files --->"
+	echo "From: \"EPGData2VDR-Skript\"<$EMAIL>" > /tmp/mail.txt
+	echo "T0: $EMAIL" >> /tmp/mail.txt
+	echo "Subject: Fehler beim laden von EPGData.com!" >> /tmp/mail.txt
+	echo "" >> /tmp/mail.txt
+	echo "Beim Download von EPGData.com konnten nicht alle Daten" >> /tmp/mail.txt
+	echo "geladen werden." >> /tmp/mail.txt
+	echo " " >> /tmp/mail.txt
+	echo "Es wurde(n) $NUMFILES von $(($MAXDAYS +1)) Dateie(n) geladen!" >> /tmp/mail.txt
+	echo "Inhalt von $WORKDIR/files:" >> /tmp/mail.txt
+	ls -l $WORKDIR/files >> /tmp/mail.txt
+	$SENDMAIL $EMAIL < /tmp/mail.txt
+fi
 
+exit
