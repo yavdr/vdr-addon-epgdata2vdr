@@ -100,35 +100,37 @@ for i in `find $WORKDIR/files/* -name "*$SUFFIX.zip" | cut -d"_" -f2 | sort -r |
  rm -f $WORKDIR/files/*$i$SUFFIX.zip
 done
 
-# Send mail if subscription is near to the end
-if [ $LEFT -lt 5 ] && [ -n "$EMAIL" ]; then #to enable set $EMAIL in your conf
-	echo "<--- Sending email about ending subscription --->"
-	echo "From: \"EPGData2VDR-Skript\"<$EMAIL>" > /tmp/mail.txt
-	echo "T0: $EMAIL" >> /tmp/mail.txt
-	echo "Subject: EPGData.com Abo endet in $LEFT Tagen!" >> /tmp/mail.txt
-	echo "" >> /tmp/mail.txt
-	echo "Das Abo bei EPGData.com hat noch eine Laufzeit von $LEFT tagen" >> /tmp/mail.txt
-	echo "und endet danach automatisch! Ein neues Abo kann unter" >> /tmp/mail.txt
-	echo "http://www.epgdata.com/index.php?action=newSubscription&iLang=de&iOEM=vdr&iCountry=de&popup=0" >> /tmp/mail.txt
-	echo "abgeschlossen werden." >> /tmp/mail.txt
-	$SENDMAIL $EMAIL < /tmp/mail.txt
-fi
+if [ -n "$EMAIL" ]; then # To enable set $EMAIL in epgdata2vdr.conf
+	# Send mail if subscription is near to the end
+	if [ "$LEFT" -lt "5" ]; then
+		echo "<--- Sending email about ending subscription --->"
+		echo "From: \"EPGData2VDR-Skript\"<$EMAIL>" > /tmp/mail.txt
+		echo "T0: $EMAIL" >> /tmp/mail.txt
+		echo "Subject: EPGData.com Abo endet in $LEFT Tagen!" >> /tmp/mail.txt
+		echo "" >> /tmp/mail.txt
+		echo "Das Abo bei EPGData.com hat noch eine Laufzeit von $LEFT tagen" >> /tmp/mail.txt
+		echo "und endet danach automatisch! Ein neues Abo kann unter" >> /tmp/mail.txt
+		echo "http://www.epgdata.com/index.php?action=newSubscription&iLang=de&iOEM=vdr&iCountry=de&popup=0" >> /tmp/mail.txt
+		echo "abgeschlossen werden." >> /tmp/mail.txt
+		$SENDMAIL $EMAIL < /tmp/mail.txt
+	fi
 
-# check if all files could be loaded (only works if MAXDAYS is less than 14)
-NUMFILES=$(($(ls $WORKDIR/files/*.zip | wc -l)))
-if [ $NUMFILES -ne $(($MAXDAYS +1)) ] && [ -n "$EMAIL" ] && [ $MAXDAYS -lt 14 ]; then #to enable set $EMAIL in your conf
-	echo "<--- Sending email about missing files --->"
-	echo "From: \"EPGData2VDR-Skript\"<$EMAIL>" > /tmp/mail.txt
-	echo "T0: $EMAIL" >> /tmp/mail.txt
-	echo "Subject: Fehler beim laden von EPGData.com!" >> /tmp/mail.txt
-	echo "" >> /tmp/mail.txt
-	echo "Beim Download von EPGData.com konnten nicht alle Daten" >> /tmp/mail.txt
-	echo "geladen werden." >> /tmp/mail.txt
-	echo " " >> /tmp/mail.txt
-	echo "Es wurde(n) $NUMFILES von $(($MAXDAYS +1)) Dateie(n) geladen!" >> /tmp/mail.txt
-	echo "Inhalt von $WORKDIR/files:" >> /tmp/mail.txt
-	ls -l $WORKDIR/files >> /tmp/mail.txt
-	$SENDMAIL $EMAIL < /tmp/mail.txt
+	# Check if all files could be loaded (only works if MAXDAYS is less than 14)
+	NUMFILES=$(($(ls $WORKDIR/files/*.zip | wc -l)))
+	if [ $NUMFILES -lt $(($MAXDAYS +1)) ] && [ $MAXDAYS -lt 14 ]; then
+		echo "<--- Sending email about missing files --->"
+		echo "From: \"EPGData2VDR-Skript\"<$EMAIL>" > /tmp/mail.txt
+		echo "T0: $EMAIL" >> /tmp/mail.txt
+		echo "Subject: Fehler beim laden von EPGData.com!" >> /tmp/mail.txt
+		echo "" >> /tmp/mail.txt
+		echo "Beim Download von EPGData.com konnten nicht alle Daten" >> /tmp/mail.txt
+		echo "geladen werden. Das Abos endet in $LEFT Tag(e)" >> /tmp/mail.txt
+		echo "" >> /tmp/mail.txt
+		echo "Es wurde(n) $NUMFILES von $(($MAXDAYS +1)) Dateie(n) geladen!" >> /tmp/mail.txt
+		echo "Inhalt von $WORKDIR/files:" >> /tmp/mail.txt
+		ls -l $WORKDIR/files >> /tmp/mail.txt
+		$SENDMAIL $EMAIL < /tmp/mail.txt
+	fi
 fi
 
 exit
