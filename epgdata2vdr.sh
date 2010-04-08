@@ -55,8 +55,6 @@ for i in `seq 0 $MAXDAYS` ; do
   TMP=`mktemp`
   nice -n 19 $CURLBIN -I -D $TMP "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" &> /dev/null
   FILE=`grep -e "^Content-disposition.*$" $TMP | sed -e ' s/\r//g' | cut -d"=" -f2`
-  [ -z $TIMEOUT ] && TIMEOUT=`grep -e "^x-epgdata-timeout.*$" $TMP | sed -e ' s/\r//g' | cut -d":" -f2` # end of subscription
-  [ -z $LEFT ] && LEFT=$((( $TIMEOUT - $(date +%s)) / 60 / 60 / 24 )) # how many days are left
   FILE="`basename $FILE .zip`"
   SIZE=`grep -e "^Content-Length.*$" $TMP | sed -e ' s/\r//g' | cut -d":" -f2`
   [ -z $TIMEOUT ] && TIMEOUT=`grep -e "^x-epgdata-timeout.*$" $TMP | sed -e ' s/\r//g' | cut -d":" -f2`
@@ -75,7 +73,7 @@ for i in `seq 0 $MAXDAYS` ; do
         echo "File: $FILE already downloaded"
       fi
     fi
-### process  start ###
+		### process  start ###
     if [ -s $WORKDIR/files/$FILE.epg ]; then
       echo "File: $FILE already processed"
     else
@@ -101,32 +99,28 @@ for i in `find $WORKDIR/files/* -name "*$SUFFIX.zip" | cut -d"_" -f2 | sort -r |
 done
 
 if [ -n "$EMAIL" ]; then # To enable set $EMAIL in epgdata2vdr.conf
-	# Send mail if subscription is near to the end
-	if [ "$LEFT" -lt "5" ]; then
-		echo "<--- Sending email about ending subscription --->"
-		echo "From: \"EPGData2VDR-Skript\"<$EMAIL>" > /tmp/mail.txt
-		echo "T0: $EMAIL" >> /tmp/mail.txt
-		echo "Subject: EPGData.com Abo endet in $LEFT Tagen!" >> /tmp/mail.txt
-		echo "" >> /tmp/mail.txt
-		echo "Das Abo bei EPGData.com hat noch eine Laufzeit von $LEFT tagen" >> /tmp/mail.txt
-		echo "und endet danach automatisch! Ein neues Abo kann unter" >> /tmp/mail.txt
-		echo "http://www.epgdata.com/index.php?action=newSubscription&iLang=de&iOEM=vdr&iCountry=de&popup=0" >> /tmp/mail.txt
-		echo "abgeschlossen werden." >> /tmp/mail.txt
-		$SENDMAIL $EMAIL < /tmp/mail.txt
-	fi
-
 	# Check if all files could be loaded (only works if MAXDAYS is less than 14)
 	NUMFILES=$(($(ls $WORKDIR/files/*.zip | wc -l)))
-	if [ $NUMFILES -lt $(($MAXDAYS +1)) ] && [ $MAXDAYS -lt 14 ]; then
-		echo "<--- Sending email about missing files --->"
+	if [ $NUMFILES -lt $(($MAXDAYS +1)) ] && [ $MAXDAYS -lt 14 ] || [ "$LEFT" -lt "5" ]; then
+		echo "<--- Sending email about missing files / ending subscription --->"
 		echo "From: \"EPGData2VDR-Skript\"<$EMAIL>" > /tmp/mail.txt
 		echo "T0: $EMAIL" >> /tmp/mail.txt
-		echo "Subject: Fehler beim laden von EPGData.com!" >> /tmp/mail.txt
+		if [ "$LEFT" -lt "5" ]; then # Subscription is ending...
+      echo "Subject: EPGData.com Abo endet in $LEFT Tag(en)!" >> /tmp/mail.txt
+      echo  "" >> /tmp/mail.txt
+   		echo "Das Abo bei EPGData.com hat noch eine Laufzeit von $LEFT Tag(en)" >> /tmp/mail.txt
+			echo "und endet danach automatisch! Ein neues Abo kann unter" >> /tmp/mail.txt
+			echo "http://www.epgdata.com/index.php?action=newSubscription&iLang=de&iOEM=vdr&iCountry=de&popup=0" >> /tmp/mail.txt
+			echo "abgeschlossen werden. Das neue Abo startet sofort nach Bezahlung!" >> /tmp/mail.txt
+		else
+      echo "Subject: Fehler beim laden von EPGData.com!" >> /tmp/mail.txt
+      echo  "" >> /tmp/mail.txt
+			echo "Beim Download von EPGData.com konnten nicht alle Daten" >> /tmp/mail.txt
+			echo "geladen werden. Hinweis: Das Abo endet in $LEFT Tag(en)" >> /tmp/mail.txt
+			echo "" >> /tmp/mail.txt
+			echo "Es wurde(n) $NUMFILES von $(($MAXDAYS +1)) Datei(en) geladen!" >> /tmp/mail.txt
+		fi
 		echo "" >> /tmp/mail.txt
-		echo "Beim Download von EPGData.com konnten nicht alle Daten" >> /tmp/mail.txt
-		echo "geladen werden. Das Abos endet in $LEFT Tag(e)" >> /tmp/mail.txt
-		echo "" >> /tmp/mail.txt
-		echo "Es wurde(n) $NUMFILES von $(($MAXDAYS +1)) Dateie(n) geladen!" >> /tmp/mail.txt
 		echo "Inhalt von $WORKDIR/files:" >> /tmp/mail.txt
 		ls -l $WORKDIR/files >> /tmp/mail.txt
 		$SENDMAIL $EMAIL < /tmp/mail.txt
