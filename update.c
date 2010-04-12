@@ -257,7 +257,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         
         // E: eventid starttime(unixdate) duration 0 0 
         // 37237569 1236067500 3000 0 0
-        xmlTextWriterWriteFormatString(writer,"E %s %ld %d 1\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
+        xmlTextWriterWriteFormatString(writer,"E %s %ld %d 0\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
         
         //T: title 
         xmlTextWriterWriteFormatString(writer,"T %s\n", pud->title);
