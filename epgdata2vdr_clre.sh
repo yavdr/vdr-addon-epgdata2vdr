@@ -96,6 +96,7 @@ for i in `seq 0 $MAXDAYS` ; do
 		### process  start ###
 		if [ -s $WORKDIR/files/$FILE.epg ]; then
 			echo "File: $FILE already processed"
+			NO_CLRE=1 # Do not delete EPG from VDR
 		else
 			if [ -e $WORKDIR/files/$FILE.zip ]; then
 				echo -e " File: $FILE  Size: $(( $SIZE / 1024 )) kB"
@@ -112,7 +113,7 @@ for i in `seq 0 $MAXDAYS` ; do
 				for chan in `seq 0 $(( ${#EPGDATA_CHANNELS[*]} -1 ))` ; do
 					if [ "${EPGDATA_CHANNELS[$chan]}" != "0" ] ; then # skip already failed channels
 						echo -n "Checking EPG for channel #$chan: "; echo ${EPGDATA_CHANNELS[$chan]}
-						### found?
+						### Found?
 						NUM[$chan]=0 # Set to 0 to avoid empty fields
 						for entry in ${EPG_CHANNELS[*]} ; do # Is there some epgdata to import?
 							if [ $entry == ${EPGDATA_CHANNELS[$chan]} ] ; then
@@ -135,21 +136,24 @@ for i in `seq 0 $MAXDAYS` ; do
 				IMPORT_LIST[$i]=$FILE
 			else
 				echo "File: Failed to load $FILE"
+				NO_CLRE=1 # Do not delete EPG from VDR
 			fi
 		fi
 	fi
 	rm $TMP
 done #i
 
-echo "${#EPGDATA_CHANNELS[*]} channels configured for EPGData2VDR:"
+#echo "${#EPGDATA_CHANNELS[*]} channels configured for EPGData2VDR:"
 echo ${EPGDATA_CHANNELS[*]}
 
 # Delete old EPG from VDR's EPG.data
-for i in ${EPGDATA_CHANNELS[*]} ; do
-	if [ "$i" != "0" ] ; then
-		$SVDRPSEND CLRE $i # Delete EPG for channel
-	fi
-done
+if [ -z $NO_CLRE ] ; then # Already procesd files or download error
+	for i in ${EPGDATA_CHANNELS[*]} ; do
+		if [ "$i" != "0" ] ; then
+			$SVDRPSEND CLRE $i # Delete EPG for channel
+		fi
+	done
+fi
 
 # Import EPG
 for i in ${IMPORT_LIST[*]} ; do

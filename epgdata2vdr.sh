@@ -11,10 +11,10 @@ SENDMAIL=/usr/sbin/sendmail
 WC=/bin/wc
 
 # install required files if necessary + create directories
-if [ ! -n "$WORKDIR" ]; then 
+if [ ! -n "$WORKDIR" ]; then
 	echo "Work directory undefined. Stopping."
 	exit 1
-fi 
+fi
 
 if [ ! -n "$PIN" ]; then
 	echo "epgdata.com PIN is not configured. Stopping"
@@ -30,7 +30,7 @@ if [ ! -d $WORKDIR/files ]; then
 	mkdir -p $WORKDIR/files
 fi
 
-if [ ! -e $WORKDIR/include/genre.xml -o ! -e $WORKDIR/include/category.xml ]; then 
+if [ ! -e $WORKDIR/include/genre.xml -o ! -e $WORKDIR/include/category.xml ]; then
 	mkdir -p $WORKDIR/include
 	if [ x$? != x0 ]; then
 		echo "$WORKDIR/include exists but is not a directory"
@@ -65,7 +65,7 @@ for i in `seq 0 $MAXDAYS` ; do
 		if [ ! -e $WORKDIR/files/$FILE.zip ]; then
 			nice -n 19 $CURLBIN "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" -o $WORKDIR/files/$FILE.zip
 			rm $WORKDIR/files/$FILE.epg > /dev/null 2>&1
-		else
+			else
 			if [ `ls -la $WORKDIR/files/$FILE.zip | cut -d" " -f5` != $SIZE  ]; then
 				nice -n 19 $CURLBIN "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" -o $WORKDIR/files/$FILE.zip
 				rm $WORKDIR/files/$FILE.epg > /dev/null 2>&1
@@ -82,8 +82,8 @@ for i in `seq 0 $MAXDAYS` ; do
 				#epgdata2vdr includedir epgimagesdir file(s)
 				$EPGDATA2VDRBIN $WORKDIR/include/ $EPGIMAGES $WORKDIR/files/$FILE.zip
 				$SVDRPSENDBIN PUTE ${PUTECHAR}$WORKDIR/files/$FILE.epg
-			else
-				echo "File: Failed to load $FILE"
+		else
+			echo "File: Failed to load $FILE"
 			fi
 		fi
 	fi
@@ -107,14 +107,14 @@ if [ -n "$EMAIL" ]; then # To enable set $EMAIL in epgdata2vdr.conf
 		echo "T0: $EMAIL" >> /tmp/mail.txt
 		if [ "$LEFT" -lt "5" ]; then # Subscription is ending...
 			echo "Subject: EPGData.com Abo endet in $LEFT Tag(en)!" >> /tmp/mail.txt
-			echo  "" >> /tmp/mail.txt
+			echo "" >> /tmp/mail.txt
 			echo "Das Abo bei EPGData.com hat noch eine Laufzeit von $LEFT Tag(en)" >> /tmp/mail.txt
 			echo "und endet danach automatisch! Ein neues Abo kann unter" >> /tmp/mail.txt
 			echo "http://www.epgdata.com/index.php?action=newSubscription&iLang=de&iOEM=vdr&iCountry=de&popup=0" >> /tmp/mail.txt
 			echo "abgeschlossen werden. Das neue Abo startet sofort nach Bezahlung!" >> /tmp/mail.txt
 		else
 			echo "Subject: Fehler beim laden von EPGData.com!" >> /tmp/mail.txt
-			echo  "" >> /tmp/mail.txt
+			echo "" >> /tmp/mail.txt
 			echo "Beim Download von EPGData.com konnten nicht alle Daten" >> /tmp/mail.txt
 			echo "geladen werden. Hinweis: Das Abo endet in $LEFT Tag(en)" >> /tmp/mail.txt
 			echo "" >> /tmp/mail.txt
