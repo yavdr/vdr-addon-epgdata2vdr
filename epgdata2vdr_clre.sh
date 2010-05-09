@@ -79,7 +79,7 @@ for i in `seq 0 $MAXDAYS` ; do
 	#AVAILABLE=`grep -e "^x-epgdata-packageAvailable.*$" $TMP | sed -e ' s/\r//g' | cut -d":" -f2`
 	[ -z $TIMEOUT ] && TIMEOUT=`grep -e "^x-epgdata-timeout.*$" $TMP | $SED -e ' s/\r//g' | cut -d":" -f2`
 	if [ -z $LEFT ] && [ -n "$TIMEOUT" ]; then
-		LEFT=$((( $TIMEOUT - $(date +%s)) / 60 / 60 / 24 ))
+		LEFT=$((( $TIMEOUT - $(date +%s)) / 60 / 60 / 24 )) # Days left (subscription)
 	fi
 	if [ ! -z $SIZE ]; then
 		if [ ! -e $WORKDIR/files/$FILE.zip ]; then
@@ -103,12 +103,10 @@ for i in `seq 0 $MAXDAYS` ; do
 				#epgdata2vdr includedir epgimagesdir file(s)
 				nice -n 19 $EPGDATA2VDR $WORKDIR/include/ $EPGIMAGES $WORKDIR/files/$FILE.zip #> $WORKDIR/files/$FILE.epg
 				nice -n 19 $SED -i 's/\x97/-/g' $WORKDIR/files/$FILE.epg # Replace long "-"
-
 				# List of channels with data in epgfile
 				EPG_CHANNELS=( $(grep '^C *' $WORKDIR/files/$FILE.epg | sed 's/C //' | awk '{printf "%s ",$0;}') )
 				#echo ${EPG_CHANNELS[*]}
 				echo "${#EPG_CHANNELS[*]} EPG entries found"
-
 				# Check if data exist for each configured channel
 				for chan in `seq 0 $(( ${#EPGDATA_CHANNELS[*]} -1 ))` ; do
 					if [ "${EPGDATA_CHANNELS[$chan]}" != "0" ] ; then # skip already failed channels
@@ -130,9 +128,7 @@ for i in `seq 0 $MAXDAYS` ; do
 					fi
 				done #chan
 				echo "==> ${NUM[*]} EPG entries found"
-
 				# Add epgfile to importlist (Will be processed later)
-				#$SVDRPSEND PUTE $PUTECHAR$WORKDIR/files/$FILE.epg
 				IMPORT_LIST[$i]=$FILE
 			else
 				echo "File: Failed to load $FILE"
@@ -144,7 +140,7 @@ for i in `seq 0 $MAXDAYS` ; do
 done #i
 
 #echo "${#EPGDATA_CHANNELS[*]} channels configured for EPGData2VDR:"
-echo ${EPGDATA_CHANNELS[*]}
+#echo ${EPGDATA_CHANNELS[*]}
 
 # Delete old EPG from VDR's EPG.data
 if [ -z $NO_CLRE ] ; then # Already procesd files or download error
