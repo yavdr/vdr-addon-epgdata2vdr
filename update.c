@@ -135,9 +135,36 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     }
     else if (!strcmp(name,"d19")) pud->title = xmlStrdup(value);
     else if (!strcmp(name,"d20")) pud->subtitle = xmlStrdup(value);
-    else if (!strcmp(name,"d21")) pud->comment_long = xmlStrdup(value);
-    else if (!strcmp(name,"d22")) pud->comment_middle = xmlStrdup(value);
-    else if (!strcmp(name,"d23")) pud->comment_short = xmlStrdup(value);
+    else if (!strcmp(name,"d21")) { // comment_long
+      if (xmlStrlen(value)) {
+        size_t size = xmlStrlen(value);
+        for (size_t i = 0; i < size; ++i) { //Replacing the \n and \r with |
+            if ((value[i] == '\n') || (value[i] == '\r')) value[i] = '|';
+				}
+			}
+		pud->comment_long = xmlStrdup(value);
+		}
+
+    else if (!strcmp(name,"d22")) { // comment_middle
+      if (xmlStrlen(value)) {
+				size_t size = xmlStrlen(value);
+        for (size_t i = 0; i < size; ++i) { //Replacing the \n and \r with |
+            if ((value[i] == '\n') || (value[i] == '\r')) value[i] = '|';
+				}
+			}
+		pud->comment_middle = xmlStrdup(value);
+		}
+
+		else if (!strcmp(name,"d23")) { // comment_short
+      if (xmlStrlen(value)) {
+				size_t size = xmlStrlen(value);
+        for (size_t i = 0; i < size; ++i) { //Replacing the \n and \r with |
+            if ((value[i] == '\n') || (value[i] == '\r')) value[i] = '|';
+				}
+			}
+		pud->comment_short = xmlStrdup(value);
+		}
+
     else if (!strcmp(name,"d24")) {
       if (xmlStrlen(value)) {
         pud->themes = xmlCharStrdup("|");
