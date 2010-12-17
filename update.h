@@ -1,5 +1,5 @@
 /*
- * update.h: epgdata plugin for the Video Disk Recorder
+ * update.h: epgdata2vdr epgdata.com parser for vdr
  *
  * See the README file for copyright information and how to reach the author.
  *
@@ -44,7 +44,7 @@ typedef struct {
 	// coming from map
 	string category;
 	string genre;
-	
+
 	//coming from XML
 	int regional;
 	int tvchannel_id;
@@ -53,7 +53,7 @@ typedef struct {
 	int tvshow_length;
 	xmlChar *broadcast_id;
 	xmlChar *tvshow_id;
-	xmlChar *primetime ;	
+	xmlChar *primetime ;
 	xmlChar *technics_bw;
 	xmlChar *technics_co_channel;
 	xmlChar *technics_vt150;
@@ -83,7 +83,8 @@ typedef struct {
 	string  picdir;
 	string  sourcepic ;
 } UserData, * UserDataPtr;
-using namespace std; 
+using namespace std;
+
 
 class cProcessEpg {
 private:
@@ -94,9 +95,14 @@ public:
 	cChannelMap *chanmap;
 	cDataMap *datamap;
 	int processFile(string confdir, char *filename);
-        void readMaps(string confdir) ; 
+    void readMaps() ;
 	string confdir ;
-	string epgimagesdir ;
+	string epgimagesdir ;  /* -i option */
+    string procdir;           /* -p option */
+    int    imgsize;           /* -s option */
+    string outfmt;            /* -o option */
+    string incdir;            /* -I option */
+    string channelmapfile;           /* -c option */
 };
 
 #endif

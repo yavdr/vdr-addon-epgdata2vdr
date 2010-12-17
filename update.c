@@ -1,18 +1,18 @@
 /*
- * update.c: epgdata plugin for the Video Disk Recorder
+ * update.c: epgdata2vdr epgdata.com parser for vdr
  *
  * See the README file for copyright information and how to reach the author.
  *
  */
 #include "update.h"
- 
+
 using namespace std;
 
 cProcessEpg::cProcessEpg()
 {
   LIBXML_TEST_VERSION
 #ifdef USE_IMAGEMAGICK
-  InitializeMagick("epgdata2vdr-im");
+  MagickCoreGenesis("epgdata2vdr-im",MagickFalse);
 #endif
 }
 
@@ -20,49 +20,49 @@ cProcessEpg::~cProcessEpg()
 {
   xmlCleanupParser();
 #ifdef USE_IMAGEMAGICK
-  DestroyMagick();
+  MagickCoreTerminus();
 #endif
 }
 
-void cProcessEpg::readMaps(string confdir)
+void cProcessEpg::readMaps()
 {
-  cProcessEpg::chanmap = new cChannelMap(confdir);
-  cProcessEpg::datamap = new cDataMap(confdir);
-}                
+  cProcessEpg::chanmap = new cChannelMap(channelmapfile);
+  cProcessEpg::datamap = new cDataMap(incdir);
+}
 
-void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data) 
+void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data)
 {
-  UserDataPtr pud = user_data; 
-  
+  UserDataPtr pud = user_data;
+
   struct tm tm;
   xmlNodePtr node ;
-  xmlChar *value; 
+  xmlChar *value;
   int retval;
-  
+
   int type = xmlTextReaderNodeType(reader) ;
   int depth = xmlTextReaderDepth(reader) ;
   const char *name = (char *)xmlTextReaderConstName(reader);
 
   if (type == XML_READER_TYPE_ELEMENT && depth == 2)
-  { 
+  {
     node = xmlTextReaderExpand(reader);
     value = xmlXPathCastNodeToString(node) ; // get the content and ...
-    node = NULL ; 
+    node = NULL ;
     retval = xmlTextReaderNext(reader); // move to closing tag on same level, we don't need to go deeper
-    
+
     // decide where to put the value
-    //     
+    //
     if (!strcmp(name,"d0")) pud->broadcast_id = xmlStrdup(value);
     else if (!strcmp(name,"d1")) pud->tvshow_id = xmlStrdup(value);
-    else if (!strcmp(name,"d2")) pud->tvchannel_id = atol((char *)value); 
+    else if (!strcmp(name,"d2")) pud->tvchannel_id = atol((char *)value);
     else if (!strcmp(name,"d3")) pud->regional = atol((char *)value);
     else if (!strcmp(name,"d4")) {  // starttime -  next would be  d5,d6: endtime, broadcast_day not required
-        sscanf((char *)value, "%04d-%02d-%02d %02d:%02d:%02d", &tm.tm_year, 
+        sscanf((char *)value, "%04d-%02d-%02d %02d:%02d:%02d", &tm.tm_year,
         &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
         tm.tm_year -= 1900;
-        tm.tm_mon -= 1; 
+        tm.tm_mon -= 1;
       tm.tm_zone = strdup("CET"); // assume date in XML to be CET
-        tm.tm_isdst = -1 ; // determine DST based on the time and locale 
+        tm.tm_isdst = -1 ; // determine DST based on the time and locale
         pud->starttime = mktime(&tm); //time_t as out of mktime is UTC on Linux
     }
     else if (!strcmp(name,"d7")) pud->tvshow_length = atol((char *)value) * 60;
@@ -120,14 +120,14 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         case 3: pud->live = xmlCharStrdup("Zeitversetzte Übertragung"); break;
         default:
           pud->live = xmlCharStrdup("") ;
-          fprintf(stderr, 
-              "unknown live_id: %ld !\n", 
+          fprintf(stderr,
+              "unknown live_id: %ld !\n",
               atol((char *)value));
       }
     }
     else if (!strcmp(name,"d18")) {
       if (xmlStrlen(value)) {
-        pud->tip = atoi((char *)value) ; 
+        pud->tip = atoi((char *)value) ;
       }
       else {
         pud->tip = 0 ;
@@ -171,7 +171,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         pud->themes = xmlStrcat(pud->themes,value);
       }
       else pud->themes = xmlCharStrdup("");
-    }   
+    }
     else if (!strcmp(name,"d25")) {
        if (atol((char *)value)) pud->genre = cProcessEpg::datamap->GetStr(atol((char *)value));
                  else pud->genre = string("");
@@ -182,11 +182,11 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         pud->sequence = xmlStrcat(pud->sequence,value);
       }
       else pud->sequence = xmlCharStrdup("");
-    }   
+    }
     else if (!strcmp(name,"d27")) {
       if (atol((char *)value)) pud->technics_stereo = xmlCharStrdup("Stereo");
                 else pud->technics_stereo = xmlCharStrdup("");
-    } 
+    }
     else if (!strcmp(name,"d28")) {
       if (atol((char *)value)) pud->technics_dolby =  xmlCharStrdup("DolbyDigital");
                 else pud->technics_dolby =  xmlCharStrdup("");
@@ -194,7 +194,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     else if (!strcmp(name,"d29")) {
       if (atol((char *)value)) pud->technics_wide =  xmlCharStrdup("16:9");
                 else pud->technics_wide =  xmlCharStrdup("");
-    }   
+    }
     else if (!strcmp(name,"d30")) {
       switch(atol((char *)value)) {
         case 0: pud->stars =  xmlCharStrdup("");      break;
@@ -203,55 +203,55 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         case 3: pud->stars =  xmlCharStrdup("[***--] ");  break;
         case 4: pud->stars =  xmlCharStrdup("[****-] ");  break;
         case 5: pud->stars =  xmlCharStrdup("[*****] ");  break;
-        default: 
+        default:
           pud->stars =      xmlCharStrdup("");
           fprintf(stderr, "unknown rating: %ld !\n", atol((char *)value));
       }
-    } 
+    }
     else if (!strcmp(name,"d31")) {
       if (xmlStrlen(value)) {
         pud->attribute = xmlCharStrdup("Prädikat: ");
         pud->attribute = xmlStrcat(pud->attribute,value);
       }
       else pud->attribute = xmlCharStrdup("");
-    }   
+    }
     else if (!strcmp(name,"d32")) {
       if (xmlStrlen(value)) {
         size_t size = xmlStrlen(value); // Replace "|" with "/"
         for (size_t i = 0; i < size; ++i) {
             if (value[i] == '|') value[i] = '/'; // Result = "USA/GB/D"
         }
-        pud->country = xmlStrdup(value); 
+        pud->country = xmlStrdup(value);
       }
       else pud->country = xmlCharStrdup("");
-    } 
+    }
     else if (!strcmp(name,"d33")) {
       if (xmlStrlen(value)) {
         pud->year = xmlStrdup(value);
       }
       else pud->year = xmlCharStrdup("");
-    }   
+    }
     else if (!strcmp(name,"d34")) {
       if (xmlStrlen(value)) {
         pud->moderator = xmlCharStrdup("|Moderator: ");
         pud->moderator = xmlStrcat(pud->moderator,value);
       }
       else pud->moderator = xmlCharStrdup("");
-    } 
+    }
     else if (!strcmp(name,"d35")) {
       if (xmlStrlen(value)) {
         pud->studio_guest = xmlCharStrdup("|Zu Gast: ");
         pud->studio_guest = xmlStrcat(pud->studio_guest,value);
       }
       else pud->studio_guest = xmlCharStrdup("");
-    } 
+    }
     else if (!strcmp(name,"d36")) {
       if (xmlStrlen(value)) {
         pud->regisseur = xmlCharStrdup("|Regie: ");
         pud->regisseur = xmlStrcat(pud->regisseur,value);
       }
       else pud->regisseur = xmlCharStrdup("");
-    } 
+    }
     else if (!strcmp(name,"d37")) {
       if (xmlStrlen(value)) {
         pud->actor = xmlCharStrdup("|Schauspieler: ");
@@ -263,35 +263,35 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     else if (!strcmp(name,"d40")) {
       if (xmlStrlen(value)) {
         string pic = pud->picdir + "/" + string((char *)value);
-        pud->sourcepic = pic.substr(0,pic.length() - 4) + ".png" ; 
+        pud->sourcepic = pic.substr(0,pic.length() - 4) + ".png" ;
       }
     }
-    xmlFree(value); 
-    value = NULL ; 
+    xmlFree(value);
+    value = NULL ;
   }
   else if (type == XML_READER_TYPE_END_ELEMENT && depth == 1)
   {
     // One event finished (data end tag reached), lets print the event!
     //
-    
-    
+
+
     if (!pud->regional) {
       for (pud->chanindex = 0; pud->chanindex < cProcessEpg::chanmap->GetChanCnt(pud->tvchannel_id); pud->chanindex++)
       {
         // C: channelid channelname
         // S19.2E-1-1101-28106 Das Erste
-        xmlTextWriterWriteFormatString(writer,"C %s\n", cProcessEpg::chanmap->GetChanStr(pud->tvchannel_id, pud->chanindex) );  
-        
-        // E: eventid starttime(unixdate) duration 0 0 
+        xmlTextWriterWriteFormatString(writer,"C %s\n", cProcessEpg::chanmap->GetChanStr(pud->tvchannel_id, pud->chanindex) );
+
+        // E: eventid starttime(unixdate) duration 0 0
         // 37237569 1236067500 3000 0 0
         xmlTextWriterWriteFormatString(writer,"E %s %ld %d 0\n", pud->broadcast_id, pud->starttime, pud->tvshow_length);
-        
-        //T: title 
+
+        //T: title
         xmlTextWriterWriteFormatString(writer,"T %s\n", pud->title);
-        
+
         // subtitle(episodetitle or the like)
         xmlTextWriterWriteFormatString(writer,"S %s\n", pud->subtitle);
-        
+
         //main text
         xmlTextWriterWriteFormatString(writer,"D ");
         xmlTextWriterWriteFormatString(writer,"%s",pud->stars);
@@ -303,14 +303,14 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
               break;
             case 3: xmlTextWriterWriteFormatString(writer,"[Tagestipp] ");
               break;
-            default: 
+            default:
               fprintf(stderr, "unknown tipflag: %d !\n", pud->tip);
           }
         if (xmlStrlen(pud->comment_short) != xmlStrlen(pud->comment_long) && xmlStrlen(pud->comment_short) > 0 ){
           xmlTextWriterWriteFormatString(writer,"Zusammenfassung: %s||", pud->comment_short);
         }
         if (xmlStrlen(pud->comment_long) > 0) xmlTextWriterWriteFormatString(writer,"%s", pud->comment_long);
-        
+
         if (pud->category.size() > 0 && pud->genre.size() > 0) {
           xmlTextWriterWriteFormatString(writer,"|%s - %s",pud->category.c_str(), pud->genre.c_str());
         } else if (pud->category.size() > 0) {
@@ -364,18 +364,18 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         {
           xmlTextWriterWriteFormatString(writer,"V %ld\n", pud->vps);
         }
-        
+
         // end event and channel
         xmlTextWriterWriteFormatString(writer,"e\n");
         xmlTextWriterWriteFormatString(writer,"c\n");
 #ifdef USE_IMAGEMAGICK
         if (pud->sourcepic.length() > 0) {
-            string destpic = epgimagesdir + "/" + string((char *)pud->broadcast_id) + ".png"; 
-            symlink(pud->sourcepic.c_str(),destpic.c_str()); 
+            string destpic = epgimagesdir + "/" + string((char *)pud->broadcast_id) + ".png";
+            symlink(pud->sourcepic.c_str(),destpic.c_str());
         }
 #endif
       }
-      
+
       // cleanup for next element
       xmlFree(pud->primetime);      pud->primetime = NULL ;
       xmlFree(pud->technics_bw);      pud->technics_bw = NULL;
@@ -384,7 +384,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
       xmlFree(pud->technics_coded);   pud->technics_coded = NULL;
       xmlFree(pud->technics_blind);   pud->technics_blind = NULL;
       xmlFree(pud->age_marker);     pud->age_marker = NULL;
-      xmlFree(pud->live);         pud->live = NULL; 
+      xmlFree(pud->live);         pud->live = NULL;
       pud->tip = 0;
       xmlFree(pud->title);        pud->title = NULL;
       xmlFree(pud->subtitle);       pud->subtitle = NULL;
@@ -405,7 +405,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
       xmlFree(pud->regisseur);      pud->regisseur = NULL;
       xmlFree(pud->actor);        pud->actor = NULL;
       pud->sourcepic = "" ;
-    } 
+    }
   }
 
 
@@ -424,17 +424,17 @@ int cProcessEpg::processFile(string confdir , char *filename)
   struct zip_stat zstat;
   struct zip_file *zfile;
   char *buffer;
-  const char *fname; 
-  
-  // parse 
+  const char *fname;
+
+  // parse
   xmlCharEncodingHandlerPtr encoder;
   xmlOutputBufferPtr outdocbuffer ;
   xmlTextReaderPtr reader;
   xmlTextWriterPtr writer;
   int parseretval;
-  
+
   // temp store
-  UserData ud;  
+  UserData ud;
   UserDataPtr user_data = &ud ;
 
   // in/output -  filename e.g.: 20091014_20091009_de_qy.zip
@@ -446,7 +446,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
   // TODO: make it more error tolerant
 #ifdef USE_IMAGEMAGICK
   struct stat ds;
-  if ( !stat(user_data->picdir.c_str(), &ds) == 0) { 
+  if ( !stat(user_data->picdir.c_str(), &ds) == 0) {
    if (mkdir(user_data->picdir.c_str(), ACCESSPERMS) == -1) {
     fprintf(stderr, "can't create picture directory %s\n", user_data->picdir.c_str());
     return -2;
@@ -459,13 +459,13 @@ int cProcessEpg::processFile(string confdir , char *filename)
     fprintf(stderr, "error: can't open %s\n", file.c_str());
     return -2;
   }
-  
+
   num_files = zip_get_num_files(pzip); // get number of files in zip to iterate
-  
+
   // first get dtd, then pictures then xml
-  
+
   // extract the dtd
-  for (zipfilenum = 0; zipfilenum < num_files; zipfilenum++) { 
+  for (zipfilenum = 0; zipfilenum < num_files; zipfilenum++) {
      if ((fname = zip_get_name(pzip, zipfilenum, 0)) == NULL) { // get the filename
          fprintf(stderr, "error: can't get filename for index %d\n", zipfilenum);
          return -3;
@@ -500,10 +500,10 @@ int cProcessEpg::processFile(string confdir , char *filename)
            fprintf(stderr, "could not write dtd file to confdir.\n");
         }
 	free(buffer); buffer = NULL;
-     } // if dtd 
+     } // if dtd
   } // loop through zip file for dtd
 
-#ifdef USE_IMAGEMAGICK  
+#ifdef USE_IMAGEMAGICK
   // extract the pictures
   for (zipfilenum = 0; zipfilenum < num_files; zipfilenum++) {
      if ((fname = zip_get_name(pzip, zipfilenum, 0)) == NULL) { // get the filename
@@ -522,7 +522,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
              if ((buffer = (char *)malloc(zstat.size)) == NULL) {
                  fprintf(stderr, "error: can't get enough memory\n");
                  return -5;
-             } 
+             }
              if ((zfile = zip_fopen_index(pzip, zipfilenum, 0)) == NULL) {
                  fprintf(stderr, "error: can't open zip file %s\n", fname);
                  return -7;
@@ -531,14 +531,14 @@ int cProcessEpg::processFile(string confdir , char *filename)
                  fprintf(stderr, "could not extract jpg file from %s.\n", outfile.c_str());
              };
              zip_fclose(zfile);  // close file after reading it from zip
-    
-    
+
+
 
              Image *image, *scaled_image;
              ImageInfo *image_info;
              ExceptionInfo *exception;
-        
-             if ((exception=(ExceptionInfo *) AcquireMagickMemory(sizeof(*exception))) == NULL){                                                
+
+             if ((exception=(ExceptionInfo *) AcquireMagickMemory(sizeof(*exception))) == NULL){
                 fprintf(stderr,"can't AcquireMagickMemory");
                 return -4;
              }
@@ -549,7 +549,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
              image = BlobToImage(image_info,  buffer, zstat.size, exception);
              if (exception->severity != UndefinedException)
                 CatchException(exception);
-              
+
              double factor = 120.0 / std::max(image->columns, image->rows);
              scaled_image = ScaleImage(image, (int)(image->columns * factor + 0.5), (int)(image->rows * factor + 0.5), exception);
              if (exception->severity != UndefinedException)
@@ -587,15 +587,15 @@ int cProcessEpg::processFile(string confdir , char *filename)
              fprintf(stderr, "error: can't open zip file %s\n", fname);
              return -7;
          }
-    
+
         // fill buffer from xml
         if (zip_fread(zfile, buffer, zstat.size) == -1 ) {
             fprintf(stderr, "could not extract xml file from %s.\n", outfile.c_str());
         }
         zip_fclose(zfile);
-        // start the processing 
+        // start the processing
         setlocale(LC_ALL, "");
-        const char *encoding  = nl_langinfo(CODESET); // get encoding 
+        const char *encoding  = nl_langinfo(CODESET); // get encoding
         fprintf(stderr, "Encoding detected: %s \n", encoding );
         encoder = xmlFindCharEncodingHandler(encoding);
         outdocbuffer = xmlOutputBufferCreateFilename (outfile.c_str(), encoder, 0);
@@ -603,12 +603,12 @@ int cProcessEpg::processFile(string confdir , char *filename)
         	  xmlOutputBufferClose(outdocbuffer);
             fprintf(stderr, "could not create file %s.\n",outfile.c_str());
         }
-        writer = xmlNewTextWriter(outdocbuffer); // create the writer 
+        writer = xmlNewTextWriter(outdocbuffer); // create the writer
         if (writer == NULL) {
             xmlFreeTextWriter(writer);
             fprintf(stderr, "could not create file output for %s.\n", outfile.c_str());
         }
-        reader = xmlReaderForMemory(buffer, zstat.size,confdir.c_str() ,"iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD); // create the reader 
+        reader = xmlReaderForMemory(buffer, zstat.size,confdir.c_str() ,"iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD); // create the reader
         if (reader != NULL) { // reader created successfull
             parseretval = xmlTextReaderRead(reader);
             while (parseretval == 1) {
@@ -617,7 +617,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
             } // parsing happens here
             xmlFreeTextReader(reader); // first destroy the reader ...
             xmlFreeTextWriter(writer); // ... and writer instance
-            if (parseretval != 0) { // something bad happened, cleanup 
+            if (parseretval != 0) { // something bad happened, cleanup
                 fprintf(stderr, "failed to parse %s,\n skipping rest of the file and cleanup\n",file.c_str());
                 xmlFree(user_data->primetime);        user_data->primetime = NULL ;
                 xmlFree(user_data->technics_bw);      user_data->technics_bw = NULL;
@@ -626,7 +626,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
                 xmlFree(user_data->technics_coded);     user_data->technics_coded = NULL;
                 xmlFree(user_data->technics_blind);     user_data->technics_blind = NULL;
                 xmlFree(user_data->age_marker);       user_data->age_marker = NULL;
-                xmlFree(user_data->live);         user_data->live = NULL; 
+                xmlFree(user_data->live);         user_data->live = NULL;
                 user_data->tip = 0;
                 xmlFree(user_data->title);          user_data->title = NULL;
                 xmlFree(user_data->subtitle);       user_data->subtitle = NULL;
@@ -647,15 +647,15 @@ int cProcessEpg::processFile(string confdir , char *filename)
                 xmlFree(user_data->regisseur);        user_data->regisseur = NULL;
                 xmlFree(user_data->actor);          user_data->actor = NULL;
             }
-        } 
+        }
         else fprintf(stderr, "Unable to get xml\n");
 	free(buffer); buffer = NULL;
-    } // if xml 
+    } // if xml
   } // loop through zip file for xml
-  
+
   if (zip_close(pzip)) {
       fprintf(stderr, "error: can't close zip file\n");
       return -9;
-  }   // close the zip 
+  }   // close the zip
   return 0; // ... and done !
 }

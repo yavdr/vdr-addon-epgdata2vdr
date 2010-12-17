@@ -1,5 +1,5 @@
 /*
- * channelmap.c: TVM2VDR plugin for the Video Disk Recorder
+ * channelmap.c: epgdata2vdr epgdata.com parser for vdr
  *
  * See the README file for copyright information and how to reach the author.
  *
@@ -8,10 +8,10 @@
 #include "channelmap.h"
 
 
-cChannelMap::cChannelMap (string confdir)
+cChannelMap::cChannelMap (string conffile)
 {
 	chanmap.clear ();
-	read_config_file(confdir);
+	read_config_file(conffile);
 }
 
 cChannelMap::~cChannelMap ()
@@ -39,25 +39,22 @@ cChannelMap::remove_whitespaces (char *s)
 
 
 int
-cChannelMap::read_config_file (string confdir)
+cChannelMap::read_config_file (string mapfile)
 {
 	ifstream cmfile;
-	string mapfile = confdir + "/epgdata2vdr_channelmap.conf" ;
 	string s;
 	size_t p;
 	int tvmid;
 	int n;
-	char *cfg_fname = NULL;
-	
+
 	cmfile.open (mapfile.c_str());
 	if (!cmfile)
 	{
-		//esyslog ("TVM2VDR: Error reading '%s'!", cfg_fname);
-                fprintf(stderr,"TVM2VDR: Error reading '%s'!", cfg_fname);
+	    fprintf(stderr,"Unable to open %s.\n", mapfile.c_str());
 		return -1;
 	}
-	//isyslog 
-	//fprintf(stderr,"TVM2VDR: Loading '%s'", cfg_fname);
+
+	fprintf(stderr,"Load '%s'", mapfile.c_str());
 	n = 0;
 	while (!cmfile.eof ())
 	{
@@ -102,8 +99,7 @@ cChannelMap::read_config_file (string confdir)
 		}
 	}
 	cmfile.close ();
-	//isyslog ("TVM2VDR: %d channel mappings read.", n);
-        //fprintf(stderr,"TVM2VDR: %d channel mappings read.", n);
+	fprintf(stderr,"%d channel mappings read.", n);
 	return n;
 }
 

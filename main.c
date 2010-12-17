@@ -1,28 +1,90 @@
 
 #include <string>
+#include <getopt.h>
 
-#include "update.h" 
+#define PROCDIR "/var/cache/vdr/epgdata2vdr"
+#define CHANNELMAP "/etc/vdr/channelmap_epgdata2vdr.conf"
+#define INCDIR "/var/cache/vdr/epgdata2vdr/includes"
+
+#include "update.h"
 using namespace std;
 
+void usage() {
+    printf("usage: epgdata2vdr\n");
+    printf("USAGE\n\tepgdata2vdr --processing-directory <directory> ... <filename> TODO \n");
+    printf("\n\tepgdata2vdr [-h|--help]\n");
+}
 
 int main(int argc, char *argv[])
 {
-	int n;
-	cProcessEpg *process ; 
-	process = new cProcessEpg();
-	process->confdir = string(argv[1]) ;
-#ifdef USE_IMAGEMAGICK
-	process->epgimagesdir = string(argv[2]) ;
-#endif
-	process->readMaps(process->confdir) ; 
+    int opt = 0;
+	int longIndex = 0;
+    cProcessEpg *process ;
 
-#ifndef USE_IMAGEMAGICK	
-	for (n=2; n<argc; n++)
-#else
-	for (n=3; n<argc; n++)
+	process = new cProcessEpg();
+
+    static const char *optString = "ipsocIh?";
+
+    static struct option long_options[] =
+    {
+        { "image-directory", required_argument, NULL, 'i' },
+        { "processing-directory", required_argument, NULL, 'p' },
+#ifdef USE_IMAGEMAGICK
+        { "image-size", required_argument, NULL, 's' },
 #endif
+        { "output-format", required_argument, NULL, 'o' },
+        { "include-directory", required_argument, NULL, 'I' },
+        { "channel-map", required_argument, NULL, 'c' },
+        { "help", no_argument, NULL, 'h' },
+        { NULL, no_argument, NULL, 'h' }
+    };
+
+    while( (opt = getopt_long( argc, argv, optString, long_options, &longIndex )) != -1 )
+    {
+        switch( opt ) {
+            case 'i':
+                process->epgimagesdir = string(optarg);
+                break;
+
+            case 'p':
+                process->procdir = string(optarg);
+                break;
+#ifdef USE_IMAGEMAGICK
+            case 's':
+                process->imgsize = atoi(optarg);
+                break;
+#endif
+            case 'o':
+                process->outfmt = string(optarg);
+                break;
+
+            case 'I':
+                process->incdir = string(optarg);
+                break;
+
+            case 'c':
+                process->channelmapfile = string(optarg);
+                break;
+
+            case 'h':   /* fall-through is intentional */
+            case '?':
+                usage();
+                break;
+            default:
+                /* You won't actually get here. */
+                break;
+        }
+    }
+
+    if ( process->incdir == "" )  process->incdir = INCDIR ;
+    if ( process->procdir == "" ) process->procdir = PROCDIR ;
+    if ( process->channelmapfile == "" ) process->channelmapfile = CHANNELMAP ;
+
+	process->readMaps() ; // read genre and channelmap from includedir and channelmap.
+
+	for (optind = longIndex ; optind<argc; optind++)
 	{
-		process->processFile(process->confdir, argv[n]);
+		process->processFile(process->confdir, argv[optind]);
 	}
 	delete process;
 	return 0 ;
