@@ -271,8 +271,8 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     // d38, d39   - pictures don't exist ! (image_small, image_medium)
     else if (!strcmp(name,"d40")) {
       if (xmlStrlen(value)) {
-        string pic = pud->picdir + "/" + string((char *)value);
-        pud->sourcepic = pic.substr(0,pic.length() - 4) + ".png" ;
+        string pic = procdir + "/images/" + string((char *)value);
+        pud->sourcepic = pic.substr(0,pic.length() - 4) + "." + imageformat ;
       }
     }
     xmlFree(value);
@@ -379,7 +379,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         xmlTextWriterWriteFormatString(writer,"c\n");
 #ifdef USE_IMAGEMAGICK
         if (pud->sourcepic.length() > 0) {
-            string destpic = epgimagesdir + "/" + string((char *)pud->broadcast_id) + ".png";
+            string destpic = epgimagesdir + "/" + string((char *)pud->broadcast_id) + "." + imageformat;
             symlink(pud->sourcepic.c_str(),destpic.c_str());
         }
 #endif
@@ -447,17 +447,15 @@ int cProcessEpg::processFile(string confdir , char *filename)
   UserDataPtr user_data = &ud ;
 
   // in/output -  filename e.g.: 20091014_20091009_de_qy.zip
-  string file = string(filename);
-  char *dir = dirname(filename);
-  string outfile = file.substr(0,file.length() -4) + ".epg";
-  user_data->picdir =  string(dir) + "/images" ; // Put all images in same dir
+  string file = string(basename(filename));
+  string outfile = procdir + file.substr(0,file.length() -4) + ".epg";
 
   // TODO: make it more error tolerant
 #ifdef USE_IMAGEMAGICK
   struct stat ds;
-  if ( !stat(user_data->picdir.c_str(), &ds) == 0) {
-   if (mkdir(user_data->picdir.c_str(), ACCESSPERMS) == -1) {
-    fprintf(stderr, "can't create picture directory %s\n", user_data->picdir.c_str());
+  if (!stat((procdir + "/images/").c_str(), &ds) == 0) {
+   if (mkdir((procdir + "/images/").c_str(), ACCESSPERMS) == -1) {
+    fprintf(stderr, "can't create picture directory %s\n", (procdir + "/images/").c_str());
     return -2;
   }
   }
@@ -481,7 +479,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
      }
 
      if (!strcmp(fname + strlen(fname) - 4, ".dtd")) {
-        string dtdname = confdir + string(fname);
+        string dtdname = procdir + "/" + string(fname);
         if (zip_stat_index(pzip, zipfilenum, 0, &zstat)) {
            fprintf(stderr, "error: can't get stat for %s\n", fname);
            return -4;
@@ -512,7 +510,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
      } // if dtd
   } // loop through zip file for dtd
 
-#ifdef USE_IMAGEMAGICK
   // extract the pictures
   for (zipfilenum = 0; zipfilenum < num_files; zipfilenum++) {
      if ((fname = zip_get_name(pzip, zipfilenum, 0)) == NULL) { // get the filename
@@ -521,7 +518,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
      }
 
      if (!strcmp(fname + strlen(fname) - 4, ".jpg")) { // if we have a picture
-         string outpic = user_data->picdir + "/" + string(fname).substr(0,string(fname).length() -4) + ".png";
+         string outpic = procdir + "/pictures/" + string(fname).substr(0,string(fname).length() -4) + "." + imageformat;
          struct stat pic;
          if ( !stat(outpic.c_str(), &pic) == 0) {      // check if it exists allready, if yes, do nothing about it
              if (zip_stat_index(pzip, zipfilenum, 0, &zstat)) {
@@ -542,40 +539,56 @@ int cProcessEpg::processFile(string confdir , char *filename)
              zip_fclose(zfile);  // close file after reading it from zip
 
 
+             if ( epgimagesdir != "" ) {
+#ifdef USE_IMAGEMAGICK
+                    if ( imgsize > 0 ) {
 
-             Image *image, *scaled_image;
-             ImageInfo *image_info;
-             ExceptionInfo *exception;
+                         Image *image, *scaled_image;
+                         ImageInfo *image_info;
+                         ExceptionInfo *exception;
 
-             if ((exception=(ExceptionInfo *) AcquireMagickMemory(sizeof(*exception))) == NULL){
-                fprintf(stderr,"can't AcquireMagickMemory");
-                return -4;
-             }
-             fprintf(stderr, "Processing %s\n", outpic.c_str());
-             GetExceptionInfo(exception);
+                         if ((exception=(ExceptionInfo *) AcquireMagickMemory(sizeof(*exception))) == NULL){
+                            fprintf(stderr,"can't AcquireMagickMemory");
+                            return -4;
+                         }
+                         fprintf(stderr, "Processing %s\n", outpic.c_str());
+                         GetExceptionInfo(exception);
 
-             image_info = CloneImageInfo((ImageInfo *) NULL);
-             image = BlobToImage(image_info,  buffer, zstat.size, exception);
-             if (exception->severity != UndefinedException)
-                CatchException(exception);
+                         image_info = CloneImageInfo((ImageInfo *) NULL);
+                         image = BlobToImage(image_info,  buffer, zstat.size, exception);
+                         if (exception->severity != UndefinedException)
+                            CatchException(exception);
 
-             double factor = 120.0 / std::max(image->columns, image->rows);
-             scaled_image = ScaleImage(image, (int)(image->columns * factor + 0.5), (int)(image->rows * factor + 0.5), exception);
-             if (exception->severity != UndefinedException)
-                CatchException(exception);
+                         double factor = 120.0 / std::max(image->columns, image->rows);
+                         scaled_image = ScaleImage(image, (int)(image->columns * factor + 0.5), (int)(image->rows * factor + 0.5), exception);
+                         if (exception->severity != UndefinedException)
+                            CatchException(exception);
 
-             strcpy(scaled_image->filename, outpic.c_str());
-             WriteImage(image_info, scaled_image);
+                         strcpy(scaled_image->filename, outpic.c_str());
+                         WriteImage(image_info, scaled_image);
 
-             DestroyImage(image);
-             DestroyImage(scaled_image);
-             DestroyImageInfo(image_info);
-             DestroyExceptionInfo(exception);
+                         DestroyImage(image);
+                         DestroyImage(scaled_image);
+                         DestroyImageInfo(image_info);
+                         DestroyExceptionInfo(exception);
+                    }
+#endif
+            }
+            else {
+                    // unzip unchanged .jpegs
+                    FILE *fh1 = NULL;
+                    if ((fh1 = fopen(outpic.c_str(), "w"))) {
+                       fwrite(buffer, 1, zstat.size, fh1);
+                       fclose(fh1);
+                    } else {
+                       fprintf(stderr, "could not write image file %s.\n", outpic.c_str());
+                    }
+            }
              free(buffer); buffer = NULL;
          }
      }
   } // loop through zip file for pictures
-#endif
+
 
   for (zipfilenum = 0; zipfilenum < num_files; zipfilenum++) {
      if ((fname = zip_get_name(pzip, zipfilenum, 0)) == NULL) { // get the filename

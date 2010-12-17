@@ -8,10 +8,10 @@
 #include "datamap.h"
 
 
-cDataMap::cDataMap (string confdir)
+cDataMap::cDataMap (string incdir)
 {
 	datamap.clear();
-	read_xml_file(confdir);
+	read_xml_file(incdir);
 }
 
 cDataMap::~cDataMap ()
@@ -20,12 +20,12 @@ cDataMap::~cDataMap ()
 }
 
 
-int cDataMap::read_xml_file(string confdir)
+int cDataMap::read_xml_file(string incdir)
 {
 	xmlTextReaderPtr reader;
     int ret;
-	string genre = confdir + "genre.xml" ;
-    string category = confdir + "category.xml" ;
+	string genre = incdir + "genre.xml" ;
+    string category = incdir + "category.xml" ;
 
 	// read categories and genre into ONE map. They don't share id's (Logic genre div 100 = category, genre is never full 100)
 

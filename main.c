@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
 	process = new cProcessEpg();
 
-    static const char *optString = "ipsocIh?";
+    static const char *optString = "ipsocIhf?";
 
     static struct option long_options[] =
     {
@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
         { "output-format", required_argument, NULL, 'o' },
         { "include-directory", required_argument, NULL, 'I' },
         { "channel-map", required_argument, NULL, 'c' },
+        { "image-format", required_argument, NULL, 'f' },
         { "help", no_argument, NULL, 'h' },
         { NULL, no_argument, NULL, 'h' }
     };
@@ -71,6 +72,10 @@ int main(int argc, char *argv[])
                 process->channelmapfile = string(optarg);
                 break;
 
+            case 'f':
+                process->imageformat = string(optarg);
+                break;
+
             case 'h':   /* fall-through is intentional */
             case '?':
                 usage();
@@ -90,6 +95,10 @@ int main(int argc, char *argv[])
     if ( process->incdir == "" )  process->incdir = INCDIR ;
     if ( process->procdir == "" ) process->procdir = PROCDIR ;
     if ( process->channelmapfile == "" ) process->channelmapfile = CHANNELMAP ;
+    if ( process->imageformat == "" ) {
+        if ( process->imgsize == 0 )  process->imageformat = "jpg";
+        else process->imageformat = "png";
+    }
 
     // read genre and channelmap from includedir and channelmap.
 	process->readMaps() ;
@@ -97,7 +106,7 @@ int main(int argc, char *argv[])
     // rest of the arguments are the files to parse
 	for (optind = longIndex ; optind<argc; optind++)
 	{
-		process->processFile(process->confdir, argv[optind]);
+		process->processFile(process->procdir, argv[optind]);
 	}
 
 	// free the memory from processing data and exit

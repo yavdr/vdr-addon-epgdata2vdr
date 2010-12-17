@@ -81,7 +81,6 @@ typedef struct {
 	xmlChar *studio_guest;
 	xmlChar *regisseur;
 	xmlChar *actor;
-	string  picdir;
 	string  sourcepic ;
 } UserData, * UserDataPtr;
 using namespace std;
@@ -98,13 +97,13 @@ public:
 	cDataMap *datamap;
 	int processFile(string confdir, char *filename);
     void readMaps() ;
-	string confdir ;
-	string epgimagesdir ;  /* -i option */
+	string epgimagesdir ;     /* -i option */
     string procdir;           /* -p option */
     int    imgsize;           /* -s option */
     string outfmt;            /* -o option */
     string incdir;            /* -I option */
-    string channelmapfile;           /* -c option */
+    string channelmapfile;    /* -c option */
+    string imageformat;       /* -f option */
 };
 
 #endif
