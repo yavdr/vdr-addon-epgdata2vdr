@@ -1,0 +1,6 @@
+Requirements: libxml2, libzip, optional(for resizing images) libimagemagick, libsqlite3 (for future use: picture cleanup)
+
+If all the required development headers are installed:
+make
+make install
+

@@ -10,14 +10,19 @@
 #define PROCDIR "/var/cache/vdr/epgdata2vdr"
 #define CHANNELMAP "/etc/vdr/channelmap_epgdata2vdr.conf"
 #define INCDIR "/var/cache/vdr/epgdata2vdr/includes"
+#define IMAGESIZE 120
 
 #include "update.h"
 using namespace std;
 
 void usage() {
-    printf("usage: epgdata2vdr\n");
-    printf("USAGE\n\tepgdata2vdr --processing-directory <directory> ... <filename> TODO \n");
-    printf("\n\tepgdata2vdr [-h|--help]\n");
+    fprintf(stderr,"USAGE: epgdata2vdr [OPTIONS] filename [filename ... ] \n");
+    fprintf(stderr,"\t-p\t--processing-directory <directory>\n\t\tfiles will be processed and kept for next run here.\n\t\t(Default: %s)\n\n",PROCDIR);
+    fprintf(stderr,"\t-i\t--image-directory <directory>\n\t\timages will be linked with evend id, for use with vdr here.\n\n");
+    fprintf(stderr,"\t-s\t--image-size int\n\t\timage size the pictures will be resized to\n\t\t(Default: %d)\n\n",IMAGESIZE );
+    fprintf(stderr,"\t-I\t--include-directory <directory>\n\t\tpath to the directory containing the content from the include file of epgdata.com\n\t\t(Default:%s)\n\n",INCDIR);
+    fprintf(stderr,"\t-c\t--channel-map <filename>\n\t\tfilename with path where the file with mapping between epgdata channel and vdr is located\n\t\t(Default:%s)\n\n",CHANNELMAP);
+    fprintf(stderr,"\t-f\t--image-format jpg|png\n\t\toutput format of the epgimages\n\n");
 }
 
 int main(int argc, char *argv[])
@@ -76,7 +81,7 @@ int main(int argc, char *argv[])
                 process->imageformat = string(optarg);
                 break;
 
-            case 'h':   /* fall-through is intentional */
+            case 'h':
             case '?':
                 usage();
                 break;
@@ -97,7 +102,10 @@ int main(int argc, char *argv[])
     if ( process->channelmapfile == "" ) process->channelmapfile = CHANNELMAP ;
     if ( process->imageformat == "" ) {
         if ( process->imgsize == 0 )  process->imageformat = "jpg";
-        else process->imageformat = "png";
+                                 else process->imageformat = "png";
+    }
+    else {
+        if ( process->imgsize == 0 ) process->imgsize = IMAGESIZE ;
     }
 
     // read genre and channelmap from includedir and channelmap.
