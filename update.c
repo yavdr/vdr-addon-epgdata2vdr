@@ -10,18 +10,27 @@ using namespace std;
 
 cProcessEpg::cProcessEpg()
 {
-  LIBXML_TEST_VERSION
+    LIBXML_TEST_VERSION
 #ifdef USE_IMAGEMAGICK
-  MagickCoreGenesis("epgdata2vdr-im",MagickFalse);
+    MagickCoreGenesis("epgdata2vdr-im",MagickFalse); // new image magick initialize
 #endif
+
+    // prepare in-memory db for more advanced data handling (approx 100k records should rectify this
+    int rc = sqlite3_open(":memory:", &db);
+    if( rc ){
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        exit(1);
+    }
 }
 
 cProcessEpg::~cProcessEpg()
 {
-  xmlCleanupParser();
+    xmlCleanupParser();
 #ifdef USE_IMAGEMAGICK
-  MagickCoreTerminus();
+    MagickCoreTerminus();
 #endif
+	sqlite3_close(db);
 }
 
 void cProcessEpg::readMaps()

@@ -1,4 +1,9 @@
-
+/*
+ * main.c: epgdata2vdr epgdata.com parser for vdr
+ *
+ * See the README file for copyright information and how to reach the author.
+ *
+ */
 #include <string>
 #include <getopt.h>
 
@@ -76,16 +81,26 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (longIndex == 0) {
+        usage(); // at least something needs to be provided
+        exit(1);
+    }
+
+    // if not given set defaults for the required paths
     if ( process->incdir == "" )  process->incdir = INCDIR ;
     if ( process->procdir == "" ) process->procdir = PROCDIR ;
     if ( process->channelmapfile == "" ) process->channelmapfile = CHANNELMAP ;
 
-	process->readMaps() ; // read genre and channelmap from includedir and channelmap.
+    // read genre and channelmap from includedir and channelmap.
+	process->readMaps() ;
 
+    // rest of the arguments are the files to parse
 	for (optind = longIndex ; optind<argc; optind++)
 	{
 		process->processFile(process->confdir, argv[optind]);
 	}
+
+	// free the memory from processing data and exit
 	delete process;
 	return 0 ;
 }

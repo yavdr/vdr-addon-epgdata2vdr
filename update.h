@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sqlite3.h>
 
 #ifdef USE_IMAGEMAGICK
 #include <magick/api.h>
@@ -89,6 +90,7 @@ using namespace std;
 class cProcessEpg {
 private:
 	void processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data);
+    sqlite3 *db;
 public:
 	cProcessEpg();
 	~cProcessEpg();
