@@ -320,16 +320,16 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         }
         if (xmlStrlen(pud->comment_long) > 0) xmlTextWriterWriteFormatString(writer,"%s", pud->comment_long);
 
-        if (pud->category.size() > 0 && pud->genre.size() > 0) {
-          xmlTextWriterWriteFormatString(writer,"|%s - %s",pud->category.c_str(), pud->genre.c_str());
-        } else if (pud->category.size() > 0) {
-          xmlTextWriterWriteFormatString(writer,"|%s",pud->category.c_str());
-        } else if (pud->genre.size() > 0) {
-          xmlTextWriterWriteFormatString(writer,"|%s",pud->genre.c_str());
+        if (pud->category.size() > 0) {
+          xmlTextWriterWriteFormatString(writer,"|Kategorie: %s",pud->category.c_str());
+        } 
+
+        if (pud->genre.size() > 0) {
+          xmlTextWriterWriteFormatString(writer,"|Genre: %s",pud->genre.c_str());
         }
-        if (pud->category.size() > 0 || pud->genre.size() > 0) { // Put secuence after category - genre
-          if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,", %s",pud->sequence);
-        } else if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->sequence);
+
+        if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->sequence);
+
         if (xmlStrlen(pud->primetime) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->primetime);
 
         if (xmlStrlen(pud->year) > 0 && xmlStrlen(pud->country) > 0) {
