@@ -14,14 +14,6 @@ cProcessEpg::cProcessEpg()
 #ifdef USE_IMAGEMAGICK
     MagickCoreGenesis("epgdata2vdr-im",MagickFalse); // new image magick initialize
 #endif
-
-    // prepare in-memory db for more advanced data handling (approx 100k records should rectify this
-    int rc = sqlite3_open(":memory:", &db);
-    if( rc ){
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        exit(1);
-    }
 }
 
 cProcessEpg::~cProcessEpg()
@@ -30,7 +22,6 @@ cProcessEpg::~cProcessEpg()
 #ifdef USE_IMAGEMAGICK
     MagickCoreTerminus();
 #endif
-	sqlite3_close(db);
 }
 
 void cProcessEpg::readMaps()
@@ -38,6 +29,7 @@ void cProcessEpg::readMaps()
   cProcessEpg::chanmap = new cChannelMap(channelmapfile);
   cProcessEpg::datamap = new cDataMap(incdir);
 }
+
 
 void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data)
 {
@@ -61,7 +53,10 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
 
     // decide where to put the value
     //
-    if (!strcmp(name,"d0")) pud->broadcast_id = xmlStrdup(value);
+    if (!strcmp(name,"d0")) {
+       pud->broadcast_id = xmlStrdup(value);
+       pud->item = atol((char *)value);
+    }
     else if (!strcmp(name,"d1")) pud->tvshow_id = xmlStrdup(value);
     else if (!strcmp(name,"d2")) pud->tvchannel_id = atol((char *)value);
     else if (!strcmp(name,"d3")) pud->regional = atol((char *)value);
@@ -207,10 +202,10 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     else if (!strcmp(name,"d30")) {
       switch(atol((char *)value)) {
         case 0: pud->stars =  xmlCharStrdup("");      break;
-        case 1: pud->stars =  xmlCharStrdup("[*----] ");  break;
-        case 2: pud->stars =  xmlCharStrdup("[**---] ");  break;
-        case 3: pud->stars =  xmlCharStrdup("[***--] ");  break;
-        case 4: pud->stars =  xmlCharStrdup("[****-] ");  break;
+        case 1: pud->stars =  xmlCharStrdup("[*] ");  break;
+        case 2: pud->stars =  xmlCharStrdup("[**] ");  break;
+        case 3: pud->stars =  xmlCharStrdup("[***] ");  break;
+        case 4: pud->stars =  xmlCharStrdup("[****] ");  break;
         case 5: pud->stars =  xmlCharStrdup("[*****] ");  break;
         default:
           pud->stars =      xmlCharStrdup("");
@@ -283,8 +278,10 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     // One event finished (data end tag reached), lets print the event!
     //
 
+    if (!pud->regional && (importedItems.find(pud->item) != importedItems.end()) ) {
+      // we didn't had this event yet - remember we have worked on it 
+      importedItems.insert(pud->item); 
 
-    if (!pud->regional) {
       for (pud->chanindex = 0; pud->chanindex < cProcessEpg::chanmap->GetChanCnt(pud->tvchannel_id); pud->chanindex++)
       {
         // C: channelid channelname

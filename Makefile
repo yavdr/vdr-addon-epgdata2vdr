@@ -13,7 +13,7 @@ endif
 all:	epgdata2vdr
 
 epgdata2vdr: main.c update.h update.c channelmap.h channelmap.c datamap.c
-	$(CXX) -Wall -g -I/usr/include/libxml2 -I/usr/include/libzip $(DEFINES) main.c update.h update.c channelmap.h channelmap.c datamap.c -lzip -lxml2 -lsqlite3 $(LIBS) -o epgdata2vdr
+	$(CXX) -Wall -g -I/usr/include/libxml2 -I/usr/include/libzip $(DEFINES) main.c update.h update.c channelmap.h channelmap.c datamap.c -lzip -lxml2 $(LIBS) -o epgdata2vdr
 
 clean: 
 	@rm -rf epgdata2vdr

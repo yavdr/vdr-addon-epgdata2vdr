@@ -12,13 +12,14 @@
 #include <cstring>
 #include <string>
 #include <ctime>
+#include <set>
+#include <algorithm>
 #include <clocale>
 #include <langinfo.h>
 #include <libgen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <sqlite3.h>
 
 #ifdef USE_IMAGEMAGICK
 #include <magick/api.h>
@@ -41,6 +42,8 @@ typedef struct {
 // mapping of external data
 	char *name;
 	int chanindex;
+        int item;
+
 // data
 	// coming from map
 	string category;
@@ -89,7 +92,7 @@ using namespace std;
 class cProcessEpg {
 private:
 	void processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data);
-    sqlite3 *db;
+        std::set< int > importedItems;
 public:
 	cProcessEpg();
 	~cProcessEpg();
