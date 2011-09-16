@@ -278,7 +278,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     // One event finished (data end tag reached), lets print the event!
     //
 
-    if (!pud->regional && (importedItems.find(pud->item) != importedItems.end()) ) {
+    if (!pud->regional && (importedItems.find(pud->item) == importedItems.end()) ) {
       // we didn't had this event yet - remember we have worked on it 
       importedItems.insert(pud->item); 
 
@@ -460,7 +460,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
 
   if ((pzip = zip_open(file.c_str(), 0, NULL)) == NULL)
   {
-    fprintf(stderr, "error: can't open %s\n", file.c_str());
+    fprintf(stderr, "error: can't open XXX %s\n", file.c_str());
     return -2;
   }
 
@@ -537,6 +537,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
 
 
              if ( epgimagesdir != "" ) {
+                    image_count++
 #ifdef USE_IMAGEMAGICK
                     if ( imgsize > 0 ) {
 
@@ -556,7 +557,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
                          if (exception->severity != UndefinedException)
                             CatchException(exception);
 
-                         double factor = 120.0 / std::max(image->columns, image->rows);
+                         double factor = imgsize / std::max(image->columns, image->rows);
                          scaled_image = ScaleImage(image, (int)(image->columns * factor + 0.5), (int)(image->rows * factor + 0.5), exception);
                          if (exception->severity != UndefinedException)
                             CatchException(exception);
@@ -676,5 +677,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
       fprintf(stderr, "error: can't close zip file\n");
       return -9;
   }   // close the zip
+  fprintf(stderr,"Converted %i epg items from %s.", importedItems.size(),file.c_str());
   return 0; // ... and done !
 }

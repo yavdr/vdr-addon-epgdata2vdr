@@ -54,7 +54,7 @@ cChannelMap::read_config_file (string mapfile)
 		return -1;
 	}
 
-	fprintf(stderr,"Load '%s'", mapfile.c_str());
+	fprintf(stderr,"Load '%s': ", mapfile.c_str());
 	n = 0;
 	while (!cmfile.eof ())
 	{
@@ -99,7 +99,7 @@ cChannelMap::read_config_file (string mapfile)
 		}
 	}
 	cmfile.close ();
-	fprintf(stderr,"%d channel mappings read.", n);
+	fprintf(stderr,"%d channel mappings read.\n", n);
 	return n;
 }
 

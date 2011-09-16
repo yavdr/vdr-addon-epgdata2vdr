@@ -4,11 +4,12 @@ USAGE
 
 epgdata2vdr [OPTIONS] filename [filename ... ] 
 	-p	--processing-directory <directory>
-		files will be processed and kept for next run here.
-		(Default: /var/cache/vdr/epgdata2vdr)
+		files will be processed and kept for next run here. Images will be stored here.
+		(Default: /var/cache/epgdata2vdr)
 
 	-i	--image-directory <directory>
-		images will be linked with evend id, for use with vdr here.
+		images will be linked with event id, for use with vdr in here.
+		(for example: /var/cache/vdr/epgimages, if not defined, no images will be exported)
 
 	-s	--image-size int
 		image size the pictures will be resized to
@@ -16,17 +17,16 @@ epgdata2vdr [OPTIONS] filename [filename ... ]
 
 	-I	--include-directory <directory>
 		path to the directory containing the content from the include file of epgdata.com
-		(Default:/var/cache/vdr/epgdata2vdr/includes)
+		(Default:/var/cache/epgdata2vdr/includes)
 
 	-c	--channel-map <filename>
 		filename with path where the file with mapping between epgdata channel and vdr is located
-		(Default:/etc/vdr/channelmap_epgdata2vdr.conf)
+		(Default:/etc/epgdata2vdr/channelmap_epgdata2vdr.conf)
 
 	-f	--image-format jpg|png
 		output format of the epgimages
 
 Currently working:
-- unpack dtd file for processing
 - unpack, parse and create file for import for vdr (multiple files possible in one run)
 - unpack convert and resize pictures
 

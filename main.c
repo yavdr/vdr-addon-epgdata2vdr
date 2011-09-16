@@ -7,9 +7,9 @@
 #include <string>
 #include <getopt.h>
 
-#define PROCDIR "/var/cache/vdr/epgdata2vdr"
-#define CHANNELMAP "/etc/vdr/channelmap_epgdata2vdr.conf"
-#define INCDIR "/var/cache/vdr/epgdata2vdr/include/"
+#define PROCDIR "/var/cache/epgdata2vdr/"
+#define CHANNELMAP "/etc/epgdata2vdr/channelmap_epgdata2vdr.conf"
+#define INCDIR "/var/cache/epgdata2vdr/include/"
 #define IMAGESIZE 120
 
 #include "update.h"
@@ -25,7 +25,6 @@ void usage() {
     fprintf(stderr,"\t-f\t--image-format jpg|png\n\t\toutput format of the epgimages\n\n");
 }
 
-    static const char *optString = "ipsocIhf?";
     static struct option long_options[] =
     {
         { "image-directory", required_argument, NULL, 'i' },
@@ -49,9 +48,8 @@ int main(int argc, char *argv[])
 
     process = new cProcessEpg();
 
-    while( (opt = getopt_long( argc, argv, optString, long_options, &longIndex )) != -1 )
+    while( (opt = getopt_long( argc, argv, "i:p:s:o:I:c:f:h:h:", long_options, &longIndex )) != -1 )
     {
-    printf (" with arg %s, %i , %s\n", optarg, opt, *argv);
         switch( opt ) {
             case 'i':
                 process->epgimagesdir = string(optarg);
@@ -112,7 +110,7 @@ int main(int argc, char *argv[])
 	process->readMaps() ;
 
     // rest of the arguments are the files to parse
-	for (optind = longIndex ; optind<argc; optind++)
+	for (optind = longIndex +1 ; optind<argc; optind++)
 	{
 		process->processFile(process->procdir, argv[optind]);
 	}

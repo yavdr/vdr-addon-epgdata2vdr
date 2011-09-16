@@ -21,7 +21,7 @@ if [ ! -n "$PIN" ]; then
 	exit 1
 fi
 
-if [ ! -e $WORKDIR/include/epgdata2vdr_channelmap.conf ]; then
+if [ ! -e $CONF ]; then
 	echo "epgdata2vdr_channelmap.conf not found. Stopping."
 	exit 1
 fi
@@ -30,15 +30,15 @@ if [ ! -d $WORKDIR/files ]; then
 	mkdir -p $WORKDIR/files
 fi
 
-if [ ! -e $WORKDIR/include/genre.xml -o ! -e $WORKDIR/include/category.xml ]; then
-	mkdir -p $WORKDIR/include
+if [ ! -e $INCLUDEDIR/genre.xml -o ! -e $INCLUDEDIR/category.xml ]; then
+	mkdir -p $INCLUDEDIR
 	if [ x$? != x0 ]; then
-		echo "$WORKDIR/include exists but is not a directory"
+		echo "$INCLUDEDIR exists but is not a directory"
 		exit 1
 	else
 		nice -n 19 $CURLBIN "http://www.epgdata.com/index.php?action=sendInclude&iOEM=&pin=$PIN&dataType=xml" \
-		-o $WORKDIR/include/include.zip
-		$UNZIPBIN -o $WORKDIR/include/include.zip -d $WORKDIR/include
+		-o $INCLUDEDIR/include.zip
+		$UNZIPBIN -o $INCLUDEDIR/include.zip -d $INCLUDEDIR
 	fi
 fi
 
@@ -47,7 +47,10 @@ if [ -e $WORKDIR/files/images/ ]; then
 	find $WORKDIR/files/images/* -type f -mtime +$MAXDAYS -print0 | xargs -0 rm -f
 fi
 # Also delete old symlinks (-L only broken symlinks)
-[ -n "$EPGIMAGES" ] && find -L $EPGIMAGES/* -type l -print0 | xargs -0 rm -f
+if [ -n "$EPGIMAGES" ]; then 
+   find -L $EPGIMAGES/* -type l -print0 | xargs -0 rm -f
+   IMAGEOPT="-i $EPGIMAGES/"
+fi
 
 # process data
 for i in `seq 0 $MAXDAYS` ; do
@@ -79,8 +82,14 @@ for i in `seq 0 $MAXDAYS` ; do
 		else
 			if [ -e $WORKDIR/files/$FILE.zip ]; then
 				echo -e " File: $FILE  Size: $(( $SIZE / 1024 )) kB"
-				#epgdata2vdr includedir epgimagesdir file(s)
-				$EPGDATA2VDRBIN $WORKDIR/include/ $EPGIMAGES $WORKDIR/files/$FILE.zip
+
+				#epgdata2vdr --help for explanation
+				$EPGDATA2VDRBIN -I $WORKDIR/include/ \
+                                                   $IMAGEOPT \
+                                                -p $WORKDIR \
+                                                -f $IMAGE_FORMAT \
+                                                -s $IMAGE_MAXSIZE \
+                                                   $WORKDIR/files/$FILE.zip
 				$SVDRPSENDBIN PUTE ${PUTECHAR}$WORKDIR/files/$FILE.epg
 		else
 			echo "File: Failed to load $FILE"
