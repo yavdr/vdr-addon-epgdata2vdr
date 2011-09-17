@@ -25,7 +25,7 @@ void usage() {
     fprintf(stderr,"\t-f\t--image-format jpg|png\n\t\toutput format of the epgimages\n\n");
 }
 
-    static struct option long_options[] =
+static struct option long_options[] =
     {
         { "image-directory", required_argument, NULL, 'i' },
         { "processing-directory", required_argument, NULL, 'p' },
@@ -37,19 +37,24 @@ void usage() {
         { "channel-map", required_argument, NULL, 'c' },
         { "image-format", required_argument, NULL, 'f' },
         { "help", no_argument, NULL, 'h' },
-        { NULL, no_argument, NULL, 'h' }
+        {0, 0, 0, 0}
     };
 
 int main(int argc, char *argv[])
 {
     int opt = 0;
-    int longIndex = 0;
     cProcessEpg *process ;
 
     process = new cProcessEpg();
 
-    while( (opt = getopt_long( argc, argv, "i:p:s:o:I:c:f:h:h:", long_options, &longIndex )) != -1 )
+    while(1)
     {
+        int longIndex = 0;
+
+        if ((opt = getopt_long( argc, argv, "i:p:s:o:I:c:f:h", long_options, &longIndex )) == -1) {
+            break;
+        }
+
         switch( opt ) {
             case 'i':
                 process->epgimagesdir = string(optarg);
@@ -82,40 +87,38 @@ int main(int argc, char *argv[])
             case 'h':
             case '?':
                 usage();
-                break;
+                return 1;
             default:
-                /* You won't actually get here. */
                 break;
         }
     }
+    if (optind < argc) {
 
-    if (longIndex == 0) {
-        usage(); // at least something needs to be provided
-        exit(1);
+        // if not given set defaults for the required paths
+        if ( process->incdir == "" )  process->incdir = INCDIR ;
+        if ( process->procdir == "" ) process->procdir = PROCDIR ;
+        if ( process->channelmapfile == "" ) process->channelmapfile = CHANNELMAP ;
+        if ( process->imageformat == "" ) {
+            if ( process->imgsize == 0 )  process->imageformat = "jpg";
+                          else process->imageformat = "png";
+        } else {
+            if ( process->imgsize == 0 ) process->imgsize = IMAGESIZE ;
+        }
+
+        // read genre and channelmap from includedir and channelmap.
+        process->readMaps() ;
+
+        // rest of the arguments are the files to parse
+        while (optind < argc) {
+            process->processFile(process->procdir, argv[optind++]);
+        }
+    } else { 
+        fprintf(stderr,"ERROR: No file to be processed.\n");
+        usage();
+        return 1;
     }
 
-    // if not given set defaults for the required paths
-    if ( process->incdir == "" )  process->incdir = INCDIR ;
-    if ( process->procdir == "" ) process->procdir = PROCDIR ;
-    if ( process->channelmapfile == "" ) process->channelmapfile = CHANNELMAP ;
-    if ( process->imageformat == "" ) {
-        if ( process->imgsize == 0 )  process->imageformat = "jpg";
-                                 else process->imageformat = "png";
-    }
-    else {
-        if ( process->imgsize == 0 ) process->imgsize = IMAGESIZE ;
-    }
-
-    // read genre and channelmap from includedir and channelmap.
-	process->readMaps() ;
-
-    // rest of the arguments are the files to parse
-	for (optind = longIndex +1 ; optind<argc; optind++)
-	{
-		process->processFile(process->procdir, argv[optind]);
-	}
-
-	// free the memory from processing data and exit
-	delete process;
-	return 0 ;
+    // free the memory from processing data and exit
+    delete process;
+    return 0 ;
 }

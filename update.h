@@ -93,6 +93,7 @@ class cProcessEpg {
 private:
 	void processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data);
         std::set< int > importedItems;
+        int imageCount;
 public:
 	cProcessEpg();
 	~cProcessEpg();

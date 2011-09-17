@@ -50,7 +50,7 @@ cChannelMap::read_config_file (string mapfile)
 	cmfile.open (mapfile.c_str());
 	if (!cmfile)
 	{
-	    fprintf(stderr,"Unable to open %s.\n", mapfile.c_str());
+	    fprintf(stderr,"Unable to open channelmap file: %s.\n", mapfile.c_str());
 		return -1;
 	}
 

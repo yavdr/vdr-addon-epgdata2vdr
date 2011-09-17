@@ -14,6 +14,7 @@ cProcessEpg::cProcessEpg()
 #ifdef USE_IMAGEMAGICK
     MagickCoreGenesis("epgdata2vdr-im",MagickFalse); // new image magick initialize
 #endif
+    imageCount = 0;
 }
 
 cProcessEpg::~cProcessEpg()
@@ -452,7 +453,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
   struct stat ds;
   if (!stat((procdir + "/images/").c_str(), &ds) == 0) {
    if (mkdir((procdir + "/images/").c_str(), ACCESSPERMS) == -1) {
-    fprintf(stderr, "can't create picture directory %s\n", (procdir + "/images/").c_str());
+    fprintf(stderr, "Unable to create picture directory %s.\n", (procdir + "/images/").c_str());
     return -2;
   }
   }
@@ -460,7 +461,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
 
   if ((pzip = zip_open(file.c_str(), 0, NULL)) == NULL)
   {
-    fprintf(stderr, "error: can't open XXX %s\n", file.c_str());
+    fprintf(stderr, "error: can't open zip file: %s\n", file.c_str());
     return -2;
   }
 
@@ -515,6 +516,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
      }
 
      if (!strcmp(fname + strlen(fname) - 4, ".jpg")) { // if we have a picture
+         imageCount++ ;
          string outpic = procdir + "/pictures/" + string(fname).substr(0,string(fname).length() -4) + "." + imageformat;
          struct stat pic;
          if ( !stat(outpic.c_str(), &pic) == 0) {      // check if it exists allready, if yes, do nothing about it
@@ -537,7 +539,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
 
 
              if ( epgimagesdir != "" ) {
-                    image_count++
 #ifdef USE_IMAGEMAGICK
                     if ( imgsize > 0 ) {
 
@@ -549,7 +550,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
                             fprintf(stderr,"can't AcquireMagickMemory");
                             return -4;
                          }
-                         fprintf(stderr, "Processing %s\n", outpic.c_str());
                          GetExceptionInfo(exception);
 
                          image_info = CloneImageInfo((ImageInfo *) NULL);
@@ -557,7 +557,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
                          if (exception->severity != UndefinedException)
                             CatchException(exception);
 
-                         double factor = imgsize / std::max(image->columns, image->rows);
+                         double factor = double(imgsize) / std::max(image->columns, image->rows);
                          scaled_image = ScaleImage(image, (int)(image->columns * factor + 0.5), (int)(image->rows * factor + 0.5), exception);
                          if (exception->severity != UndefinedException)
                             CatchException(exception);
@@ -571,17 +571,17 @@ int cProcessEpg::processFile(string confdir , char *filename)
                          DestroyExceptionInfo(exception);
                     }
 #endif
-            }
-            else {
-                    // unzip unchanged .jpegs
-                    FILE *fh1 = NULL;
-                    if ((fh1 = fopen(outpic.c_str(), "w"))) {
-                       fwrite(buffer, 1, zstat.size, fh1);
-                       fclose(fh1);
-                    } else {
-                       fprintf(stderr, "could not write image file %s.\n", outpic.c_str());
+                    if ( imgsize == 0 ) {
+                          // unzip unchanged .jpegs
+                          FILE *fh1 = NULL;
+                          if ((fh1 = fopen(outpic.c_str(), "w"))) {
+                              fwrite(buffer, 1, zstat.size, fh1);
+                              fclose(fh1);
+                          } else {
+                              fprintf(stderr, "could not write image file %s.\n", outpic.c_str());
+                          }
                     }
-            }
+             }
              free(buffer); buffer = NULL;
          }
      }
@@ -677,6 +677,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
       fprintf(stderr, "error: can't close zip file\n");
       return -9;
   }   // close the zip
-  fprintf(stderr,"Converted %i epg items from %s.", importedItems.size(),file.c_str());
+  fprintf(stderr,"Converted %i epg items from %s. %i pictures exported.\n", importedItems.size(),file.c_str(), imageCount);
   return 0; // ... and done !
 }
