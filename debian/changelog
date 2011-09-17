@@ -1,0 +1,14 @@
+vdr-addon-epgdata2vdr (0.0.1+svn20100714-3yavdr1~natty) natty; urgency=low
+
+  * natty migration
+
+ -- Marco Scholl <develop@marco-scholl.de>  Thu, 03 Mar 2011 08:21:49 +0100
+
+vdr-addon-epgdata2vdr (0.0.1+svn20100714-2yavdr1) lucid; urgency=low
+
+  * Initial release (rev. 180)
+
+
+ -- Holger Schvestka <hotzenplotz5@gmx.de>  Wed, 14 Jul 2010 14:56:26 +0100
+
+

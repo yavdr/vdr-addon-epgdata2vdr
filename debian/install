@@ -1,0 +1,5 @@
+epgdata2vdr			usr/bin
+epgdata2vdr.conf		etc/vdr
+epgdata2vdr_channelmap.conf	etc/epgdata2vdr
+epgdata2vdr.sh			usr/bin
+debian/epgdata2vdr-update	etc/cron.daily

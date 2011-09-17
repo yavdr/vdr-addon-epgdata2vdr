@@ -1,0 +1,4 @@
+var/cache/vdr/epgimages
+var/cache/vdr/epgdata2vdr/include
+var/cache/vdr/epgdata2vdr/files
+etc/epgdata2vdr

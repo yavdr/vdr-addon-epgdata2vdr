@@ -1,0 +1,14 @@
+Source: vdr-addon-epgdata2vdr
+Section: misc
+Priority: extra
+Maintainer: Steffen Barszus <steffenbpunkt@googlemail.com>
+Build-Depends: debhelper (>= 7.0.50~), gettext, libxml2-dev, libzip-dev, libmagickcore-dev
+Standards-Version: 3.9.2
+https://github.com/yavdr/vdr-addon-epgdata2vdr
+
+Package: vdr-addon-epgdata2vdr
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, curl, unzip, vdr (>= 1.7.10)
+Description: gets EPG information from epgdata.com
+ gets EPG information from epgdata.com
+

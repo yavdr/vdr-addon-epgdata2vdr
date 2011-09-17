@@ -1,0 +1,24 @@
+#!/bin/sh
+
+logger -s "Starting epgdata2vdr"
+svdrpsend MESG "Suche EPG per EPGDATA..."
+
+# Plugin EPGSearch anhalten
+svdrpsend plug epgsearch SETS off 
+
+sleep 1
+if [ ! -e /var/log/epg-update ]; then 
+   touch /var/log/epg-update
+   chown vdr:vdr /var/log/epg-update
+fi 
+
+echo -n "`date`  " >> /var/log/epg-update
+su -c '/usr/bin/epgdata2vdr.sh >> /var/log/epg-update' vdr
+
+sleep 1
+
+# Plugin EPGSearch wieder starten
+svdrpsend plug epgsearch SETS on 
+ 
+svdrpsend MESG "EPG-Suche beendet" 
+logger -s "EPG Suche beendet" 
