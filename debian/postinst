@@ -20,8 +20,8 @@ set -e
 
 case "$1" in
     configure)
-        chown -R vdr:vdr /var/cache/epgdata2vdr/include
-	chown -R vdr:vdr /var/cache/epgdata2vdr/files
+        chown -R vdr:vdr /var/cache/epgdata2vdr/.
+	chown -R vdr:vdr /var/cache/epgdata2vdr/*
 	chown -R vdr:vdr /var/cache/vdr/epgimages
 	chown vdr:vdr /usr/bin/epgdata2vdr.sh
 	chown vdr:vdr /usr/bin/epgdata2vdr

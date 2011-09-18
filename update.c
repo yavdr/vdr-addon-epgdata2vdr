@@ -459,7 +459,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
   }
 #endif
 
-  if ((pzip = zip_open(file.c_str(), 0, NULL)) == NULL)
+  if ((pzip = zip_open(filename, 0, NULL)) == NULL)
   {
     fprintf(stderr, "error: can't open zip file: %s\n", file.c_str());
     return -2;

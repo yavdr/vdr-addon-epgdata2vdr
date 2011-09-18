@@ -22,7 +22,7 @@ if [ ! -n "$PIN" ]; then
 fi
 
 if [ ! -e $CONF ]; then
-	echo "epgdata2vdr_channelmap.conf not found. Stopping."
+	echo "$CONF not found. Stopping."
 	exit 1
 fi
 
@@ -43,8 +43,8 @@ if [ ! -e $INCLUDEDIR/genre.xml -o ! -e $INCLUDEDIR/category.xml ]; then
 fi
 
 # Delete old EPG-Images
-if [ -e $WORKDIR/files/images/ ]; then
-	find $WORKDIR/files/images/* -type f -mtime +$MAXDAYS -print0 | xargs -0 rm -f
+if [ -e $WORKDIR/images/ ]; then
+	find $WORKDIR/images/* -type f -mtime +$MAXDAYS -print0 | xargs -0 rm -f
 fi
 # Also delete old symlinks (-L only broken symlinks)
 if [ -n "$EPGIMAGES" ]; then 
@@ -67,24 +67,25 @@ for i in `seq 0 $MAXDAYS` ; do
 	if [ ! -z $SIZE ]; then
 		if [ ! -e $WORKDIR/files/$FILE.zip ]; then
 			nice -n 19 $CURLBIN "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" -o $WORKDIR/files/$FILE.zip
-			rm $WORKDIR/files/$FILE.epg > /dev/null 2>&1
+			rm $WORKDIR/$FILE.epg > /dev/null 2>&1
 			else
 			if [ `ls -la $WORKDIR/files/$FILE.zip | cut -d" " -f5` != $SIZE  ]; then
 				nice -n 19 $CURLBIN "http://www.epgdata.com/index.php?action=sendPackage&iOEM=VDR&pin=$PIN&dayOffset=$i&dataType=xml" -o $WORKDIR/files/$FILE.zip
-				rm $WORKDIR/files/$FILE.epg > /dev/null 2>&1
+				rm $WORKDIR/$FILE.epg > /dev/null 2>&1
 			else
 				echo "File: $FILE already downloaded"
 			fi
 		fi
 		### process  start ###
-		if [ -s $WORKDIR/files/$FILE.epg ]; then
+		if [ -s $WORKDIR/$FILE.epg ]; then
 			echo "File: $FILE already processed"
 		else
 			if [ -e $WORKDIR/files/$FILE.zip ]; then
 				echo -e " File: $FILE  Size: $(( $SIZE / 1024 )) kB"
 
 				#epgdata2vdr --help for explanation
-				$EPGDATA2VDRBIN -I $WORKDIR/include/ \
+				$EPGDATA2VDRBIN -c $CONF \
+                                                -I $WORKDIR/include/ \
                                                    $IMAGEOPT \
                                                 -p $WORKDIR \
                                                 -f $IMAGE_FORMAT \
@@ -103,7 +104,7 @@ done
 echo -n "Cleanup old files ... "
 for i in `find $WORKDIR/files/* -name "*$SUFFIX.zip" | cut -d"_" -f2 | sort -r | uniq | tail -n +2` ; do
 	echo "Cleanup files of : $i "
-	rm -f $WORKDIR/files/*$i$SUFFIX.epg
+	rm -f $WORKDIR/*$i$SUFFIX.epg
 	rm -f $WORKDIR/files/*$i$SUFFIX.zip
 done
 
