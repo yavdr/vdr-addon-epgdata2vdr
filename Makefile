@@ -19,13 +19,15 @@ clean:
 	@rm -rf epgdata2vdr
 
 install:
-	install -d -m 750 epgdata2vdr $(DESTDIR)/usr/bin/
-	install -d -m 750 epgdata2vdr.sh $(DESTDIR)/usr/bin/
-	install -d -m 750 epgdata-update.cron-daily $(DESTDIR)/etc/cron.daily/epgdata2vdr-update
+	install -d -m 755 $(DESTDIR)/etc/cron.daily/
+	install -d -m 755 $(DESTDIR)/usr/bin/
+	install -m 750 epgdata2vdr $(DESTDIR)/usr/bin/
+	install -m 750 epgdata2vdr.sh $(DESTDIR)/usr/bin/
+	install -m 750 epgdata-update.cron-daily $(DESTDIR)/etc/cron.daily/epgdata2vdr-update
 	install -d -m 755 $(DESTDIR)/etc/epgdata2vdr/
 	install -d -m 755 $(DESTDIR)/var/cache/epgdata2vdr/include/
 	install -d -m 755 $(DESTDIR)/var/cache/epgdata2vdr/files/
-	install -d -m 660 epgdata2vdr_channelmap.conf $(DESTDIR)/etc/epgdata2vdr/epgdata2vdr_channelmap.conf
+	install -m 660 epgdata2vdr_channelmap.conf $(DESTDIR)/etc/epgdata2vdr/epgdata2vdr_channelmap.conf
 	install -d $(DESTDIR)/etc/vdr
 	install -d -m 660 epgdata2vdr.conf $(DESTDIR)/etc/vdr/epgdata2vdr.conf
 
