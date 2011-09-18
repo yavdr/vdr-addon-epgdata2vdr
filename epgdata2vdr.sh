@@ -91,7 +91,7 @@ for i in `seq 0 $MAXDAYS` ; do
                                                 -f $IMAGE_FORMAT \
                                                 -s $IMAGE_MAXSIZE \
                                                    $WORKDIR/files/$FILE.zip
-				$SVDRPSENDBIN PUTE ${PUTECHAR}$WORKDIR/files/$FILE.epg
+				$SVDRPSENDBIN PUTE ${PUTECHAR}$WORKDIR/$FILE.epg
 		else
 			echo "File: Failed to load $FILE"
 			fi

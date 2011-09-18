@@ -517,9 +517,9 @@ int cProcessEpg::processFile(string confdir , char *filename)
 
      if (!strcmp(fname + strlen(fname) - 4, ".jpg")) { // if we have a picture
          imageCount++ ;
-         string outpic = procdir + "/pictures/" + string(fname).substr(0,string(fname).length() -4) + "." + imageformat;
+         string outpic = procdir + "images/" + string(fname).substr(0,string(fname).length() -4) + "." + imageformat;
          struct stat pic;
-         if ( !stat(outpic.c_str(), &pic) == 0) {      // check if it exists allready, if yes, do nothing about it
+         if ( stat(outpic.c_str(), &pic) == -1 ) {      // check if it exists allready, if yes, do nothing about it
              if (zip_stat_index(pzip, zipfilenum, 0, &zstat)) {
                  fprintf(stderr, "error: can't get stat for %s\n", fname);
                  return -4;
@@ -536,7 +536,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
                  fprintf(stderr, "could not extract jpg file from %s.\n", outfile.c_str());
              };
              zip_fclose(zfile);  // close file after reading it from zip
-
 
              if ( epgimagesdir != "" ) {
 #ifdef USE_IMAGEMAGICK
@@ -677,6 +676,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
       fprintf(stderr, "error: can't close zip file\n");
       return -9;
   }   // close the zip
-  fprintf(stderr,"Converted %i epg items from %s. %i pictures exported.\n", importedItems.size(),file.c_str(), imageCount);
+  fprintf(stderr,"Converted %s. %i epg items with %i pictures exported overall.\n", file.c_str(), importedItems.size(), imageCount);
   return 0; // ... and done !
 }
