@@ -25,13 +25,6 @@ cProcessEpg::~cProcessEpg()
 #endif
 }
 
-void cProcessEpg::readMaps()
-{
-  cProcessEpg::chanmap = new cChannelMap(channelmapfile);
-  cProcessEpg::datamap = new cDataMap(incdir);
-}
-
-
 void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data)
 {
   UserDataPtr pud = user_data;
@@ -110,8 +103,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     }
     else if (!strcmp(name,"d16")) {
       if (xmlStrlen(value)) {
-        pud->age_marker = xmlCharStrdup("FSK: ");
-        pud->age_marker = xmlStrcat(pud->age_marker, value);
+        pud->age_marker = xmlStrdup(value);
       }
       else {
         pud->age_marker = xmlCharStrdup("");
@@ -277,6 +269,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
   else if (type == XML_READER_TYPE_END_ELEMENT && depth == 1)
   {
     // One event finished (data end tag reached), lets print the event!
+    // Don't print regional and duplicate events
     //
 
     if (!pud->regional && (importedItems.find(pud->item) == importedItems.end()) ) {
@@ -357,7 +350,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
             if (xmlStrlen(pud->technics_dolby) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_dolby);
             if (xmlStrlen(pud->technics_wide) > 0) xmlTextWriterWriteFormatString(writer,"%s ",pud->technics_wide);
         }
-        if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->age_marker);
+        if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"|FSK: %s",pud->age_marker);
         if (xmlStrlen(pud->live) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->live);
         if (xmlStrlen(pud->attribute) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->attribute);
         xmlTextWriterWriteFormatString(writer,"%s",pud->themes);
@@ -367,20 +360,22 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         xmlTextWriterWriteFormatString(writer,"%s",pud->actor);
         xmlTextWriterWriteFormatString(writer,"|Show-Id: %s",pud->tvshow_id);
         xmlTextWriterWriteFormatString(writer,"\n"); // end of D (main information section, line breaks are '|' (pipe) in here !
+
+        // additional tags based on data
         if (pud->vps)
         {
           xmlTextWriterWriteFormatString(writer,"V %ld\n", pud->vps);
         }
+        if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"R %s\n",pud->age_marker);
+        
 
         // end event and channel
         xmlTextWriterWriteFormatString(writer,"e\n");
         xmlTextWriterWriteFormatString(writer,"c\n");
-#ifdef USE_IMAGEMAGICK
-        if (pud->sourcepic.length() > 0) {
+        if ((pud->sourcepic.length() > 0) && (epgimagesdir != "")) {
             string destpic = epgimagesdir + "/" + string((char *)pud->broadcast_id) + "." + imageformat;
             symlink(pud->sourcepic.c_str(),destpic.c_str());
         }
-#endif
       }
 
       // cleanup for next element
@@ -449,7 +444,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
   string outfile = procdir + file.substr(0,file.length() -4) + ".epg";
 
   // TODO: make it more error tolerant
-#ifdef USE_IMAGEMAGICK
   struct stat ds;
   if (!stat((procdir + "/images/").c_str(), &ds) == 0) {
    if (mkdir((procdir + "/images/").c_str(), ACCESSPERMS) == -1) {
@@ -457,7 +451,6 @@ int cProcessEpg::processFile(string confdir , char *filename)
     return -2;
   }
   }
-#endif
 
   if ((pzip = zip_open(filename, 0, NULL)) == NULL)
   {

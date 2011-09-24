@@ -19,9 +19,7 @@
 using namespace std;
 
 typedef vector<char *> cChanVec;
-
 typedef map<int, cChanVec> cChanMap;
-
 typedef map<int, bool> cVPSMap;
 
 class cChannelMap {
@@ -35,6 +33,7 @@ public:
   cVPSMap vpsmap;
   int GetChanCnt(int tvmid);
   char *GetChanStr(int tvmid, int index);
+  void GetAllChanStr();
 //  tChannelID GetChanID(int tvmid, int index);
 };
 

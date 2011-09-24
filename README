@@ -26,6 +26,8 @@ epgdata2vdr [OPTIONS] filename [filename ... ]
 	-f	--image-format jpg|png
 		output format of the epgimages
 
+	-C	--print-channels
+                print all mapped channels in noepgmenu format (channel id, space seperated
 Currently working:
 - unpack, parse and create file for import for vdr (multiple files possible in one run)
 - unpack convert and resize pictures

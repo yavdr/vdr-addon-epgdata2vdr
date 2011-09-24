@@ -8,7 +8,7 @@
 #include <getopt.h>
 
 #define PROCDIR "/var/cache/epgdata2vdr/"
-#define CHANNELMAP "/etc/epgdata2vdr/channelmap_epgdata2vdr.conf"
+#define CHANNELMAP "/etc/epgdata2vdr/channelmap.conf"
 #define INCDIR "/var/cache/epgdata2vdr/include/"
 #define IMAGESIZE 120
 
@@ -23,6 +23,7 @@ void usage() {
     fprintf(stderr,"\t-I\t--include-directory <directory>\n\t\tpath to the directory containing the content from the include file of epgdata.com\n\t\t(Default:%s)\n\n",INCDIR);
     fprintf(stderr,"\t-c\t--channel-map <filename>\n\t\tfilename with path where the file with mapping between epgdata channel and vdr is located\n\t\t(Default:%s)\n\n",CHANNELMAP);
     fprintf(stderr,"\t-f\t--image-format jpg|png\n\t\toutput format of the epgimages\n\n");
+    fprintf(stderr,"\t-C\t--print-channels\n\t\tprint all mapped channels in noepgmenu format (channel id, space seperated)\n");
 }
 
 static struct option long_options[] =
@@ -36,9 +37,12 @@ static struct option long_options[] =
         { "include-directory", required_argument, NULL, 'I' },
         { "channel-map", required_argument, NULL, 'c' },
         { "image-format", required_argument, NULL, 'f' },
+        { "print-channels", no_argument, NULL, 'C' },
         { "help", no_argument, NULL, 'h' },
         {0, 0, 0, 0}
     };
+
+bool printchan = false;
 
 int main(int argc, char *argv[])
 {
@@ -51,7 +55,7 @@ int main(int argc, char *argv[])
     {
         int longIndex = 0;
 
-        if ((opt = getopt_long( argc, argv, "i:p:s:o:I:c:f:h", long_options, &longIndex )) == -1) {
+        if ((opt = getopt_long( argc, argv, "i:p:s:o:I:c:f:hC", long_options, &longIndex )) == -1) {
             break;
         }
 
@@ -83,6 +87,9 @@ int main(int argc, char *argv[])
             case 'f':
                 process->imageformat = string(optarg);
                 break;
+            case 'C':
+                printchan = true;
+                break;
 
             case 'h':
             case '?':
@@ -92,30 +99,35 @@ int main(int argc, char *argv[])
                 break;
         }
     }
+    // if not given set defaults for the required paths
+    if ( process->incdir == "" )  process->incdir = INCDIR ;
+    if ( process->procdir == "" ) process->procdir = PROCDIR ;
+    if ( process->channelmapfile == "" ) process->channelmapfile = CHANNELMAP ;
+    if ( process->imageformat == "" ) {
+        if ( process->imgsize == 0 )  process->imageformat = "jpg";
+                      else process->imageformat = "png";
+    } else {
+        if ( process->imgsize == 0 ) process->imgsize = IMAGESIZE ;
+    }
+
+    // read genre and category from includedir and channelmap.
+    process->chanmap = new cChannelMap(process->channelmapfile);
+    process->datamap = new cDataMap(process->incdir);
+
     if (optind < argc) {
-
-        // if not given set defaults for the required paths
-        if ( process->incdir == "" )  process->incdir = INCDIR ;
-        if ( process->procdir == "" ) process->procdir = PROCDIR ;
-        if ( process->channelmapfile == "" ) process->channelmapfile = CHANNELMAP ;
-        if ( process->imageformat == "" ) {
-            if ( process->imgsize == 0 )  process->imageformat = "jpg";
-                          else process->imageformat = "png";
-        } else {
-            if ( process->imgsize == 0 ) process->imgsize = IMAGESIZE ;
-        }
-
-        // read genre and channelmap from includedir and channelmap.
-        process->readMaps() ;
 
         // rest of the arguments are the files to parse
         while (optind < argc) {
             process->processFile(process->procdir, argv[optind++]);
         }
     } else { 
-        fprintf(stderr,"ERROR: No file to be processed.\n");
-        usage();
-        return 1;
+        if ( printchan ) {
+            process->chanmap->GetAllChanStr();
+        } else {
+            fprintf(stderr,"ERROR: No file to be processed.\n");
+            usage();
+            return 1;
+        }
     }
 
     // free the memory from processing data and exit

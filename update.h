@@ -101,7 +101,7 @@ public:
 	cDataMap *datamap;
 	int processFile(string confdir, char *filename);
     void readMaps() ;
-	string epgimagesdir ;     /* -i option */
+    string epgimagesdir ;     /* -i option */
     string procdir;           /* -p option */
     int    imgsize;           /* -s option */
     string outfmt;            /* -o option */

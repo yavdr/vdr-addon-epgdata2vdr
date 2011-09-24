@@ -103,6 +103,8 @@ cChannelMap::read_config_file (string mapfile)
 	return n;
 }
 
+cChanMap::iterator chaniter;
+
 int
 cChannelMap::GetChanCnt(int tvmid)
 {
@@ -116,4 +118,13 @@ cChannelMap::GetChanStr (int tvmid, int index)
 }
 
 
+void
+cChannelMap::GetAllChanStr()
+{
+    for(chaniter = cChannelMap::chanmap.begin(); chaniter != cChannelMap::chanmap.end(); chaniter++) {
+       for (unsigned i=0; i < chaniter->second.size(); i++) {
+         printf("%s ",chaniter->second[i]); 
+       }
 
+    }
+}
