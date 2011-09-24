@@ -27,7 +27,8 @@ install:
 	install -d -m 755 $(DESTDIR)/etc/epgdata2vdr/
 	install -d -m 755 $(DESTDIR)/var/cache/epgdata2vdr/include/
 	install -d -m 755 $(DESTDIR)/var/cache/epgdata2vdr/files/
-	install -m 660 epgdata2vdr_channelmap.conf $(DESTDIR)/etc/epgdata2vdr/epgdata2vdr_channelmap.conf
+	install -m 660 epgdata2vdr_channelmap.conf $(DESTDIR)/etc/epgdata2vdr/channelmap.conf
+	install -m 660 genremap.conf $(DESTDIR)/etc/epgdata2vdr/genremap.conf
 	install -d $(DESTDIR)/etc/vdr
 	install -m 660 epgdata2vdr.conf $(DESTDIR)/etc/vdr/epgdata2vdr.conf
 
