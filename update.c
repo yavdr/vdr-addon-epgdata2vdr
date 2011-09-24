@@ -175,8 +175,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     }
     else if (!strcmp(name,"d26")) {
       if ((xmlStrlen(value) != 0) && (atol((char *)value) != 0)) {
-        pud->sequence = xmlCharStrdup("Folge: ");
-        pud->sequence = xmlStrcat(pud->sequence,value);
+        pud->sequence = xmlStrdup(value);
       }
       else pud->sequence = xmlCharStrdup("");
     }
@@ -237,22 +236,19 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
     }
     else if (!strcmp(name,"d35")) {
       if (xmlStrlen(value)) {
-        pud->studio_guest = xmlCharStrdup("|Zu Gast: ");
-        pud->studio_guest = xmlStrcat(pud->studio_guest,value);
+        pud->studio_guest = xmlStrdup(value);
       }
       else pud->studio_guest = xmlCharStrdup("");
     }
     else if (!strcmp(name,"d36")) {
       if (xmlStrlen(value)) {
-        pud->regisseur = xmlCharStrdup("|Regie: ");
-        pud->regisseur = xmlStrcat(pud->regisseur,value);
+        pud->regisseur = xmlStrdup(value);
       }
       else pud->regisseur = xmlCharStrdup("");
     }
     else if (!strcmp(name,"d37")) {
       if (xmlStrlen(value)) {
-        pud->actor = xmlCharStrdup("|Schauspieler: ");
-        pud->actor = xmlStrcat(pud->actor,value);
+        pud->actor = xmlStrdup(value);
       }
       else pud->actor = xmlCharStrdup("");
     }
@@ -306,6 +302,8 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
             default:
               fprintf(stderr, "unknown tipflag: %d !\n", pud->tip);
           }
+        if (xmlStrlen(pud->themes) > 0) xmlTextWriterWriteFormatString(writer,"Thema: %s|",pud->themes);
+        if (xmlStrlen(pud->studio_guest) > 0)  xmlTextWriterWriteFormatString(writer,"Gäste: %s|",pud->studio_guest);
         if (xmlStrlen(pud->comment_short) != xmlStrlen(pud->comment_long) && xmlStrlen(pud->comment_short) > 0 ){
           xmlTextWriterWriteFormatString(writer,"Zusammenfassung: %s||", pud->comment_short);
         }
@@ -319,7 +317,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
           xmlTextWriterWriteFormatString(writer,"|Genre: %s",pud->genre.c_str());
         }
 
-        if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->sequence);
+        if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"|Folge: %s",pud->sequence);
 
         if (xmlStrlen(pud->primetime) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->primetime);
 
@@ -353,20 +351,32 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"|FSK: %s",pud->age_marker);
         if (xmlStrlen(pud->live) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->live);
         if (xmlStrlen(pud->attribute) > 0) xmlTextWriterWriteFormatString(writer,"|%s",pud->attribute);
-        xmlTextWriterWriteFormatString(writer,"%s",pud->themes);
         xmlTextWriterWriteFormatString(writer,"%s",pud->moderator);
-        xmlTextWriterWriteFormatString(writer,"%s",pud->studio_guest);
         xmlTextWriterWriteFormatString(writer,"%s",pud->regisseur);
         xmlTextWriterWriteFormatString(writer,"%s",pud->actor);
         xmlTextWriterWriteFormatString(writer,"|Show-Id: %s",pud->tvshow_id);
         xmlTextWriterWriteFormatString(writer,"\n"); // end of D (main information section, line breaks are '|' (pipe) in here !
 
-        // additional tags based on data
+        // additional tags 
         if (pud->vps)
         {
           xmlTextWriterWriteFormatString(writer,"V %ld\n", pud->vps);
         }
+        // parental rating - age
         if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"R %s\n",pud->age_marker);
+        
+        // dvb-si genre
+        // TODO
+        
+        // stream information (X values)
+        //
+
+        // structured additional information
+        if (xmlStrlen(pud->regisseur) > 0) xmlTextWriterWriteFormatString(writer,"K REGISSEUR %s\n",pud->regisseur);
+        if (xmlStrlen(pud->actor) > 0) xmlTextWriterWriteFormatString(writer,"K ACTORS %s\n",pud->actor);
+        if (xmlStrlen(pud->year) > 0) xmlTextWriterWriteFormatString(writer,"K YEAR %s\n",pud->year);
+        if (xmlStrlen(pud->country) > 0) xmlTextWriterWriteFormatString(writer,"K COUNTRY %s\n",pud->country);
+        if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"K SEQUENCE %s\n",pud->sequence);
         
 
         // end event and channel
