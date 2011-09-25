@@ -23,6 +23,10 @@ epgdata2vdr [OPTIONS] filename [filename ... ]
 		filename with path where the file with mapping between epgdata channel and vdr is located
 		(Default:/etc/epgdata2vdr/channelmap_epgdata2vdr.conf)
 
+	-g	--genre-map <filename>
+		filename with path where the file with mapping between epgdata genre and dvb-si genre for vdr is located
+		(Default:/etc/epgdata2vdr/genremap.conf)
+
 	-f	--image-format jpg|png
 		output format of the epgimages
 

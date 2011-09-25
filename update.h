@@ -36,18 +36,21 @@
 #include <libxml/xpath.h>
 
 #include "channelmap.h"
+#include "genremap.h"
 #include "datamap.h"
 
 typedef struct {
 // mapping of external data
 	char *name;
 	int chanindex;
+        int genreindex;
         int item;
 
 // data
 	// coming from map
 	string category;
 	string genre;
+        int genre_id;
 
 	//coming from XML
 	int regional;
@@ -91,16 +94,16 @@ using namespace std;
 
 class cProcessEpg {
 private:
-	void processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data);
-        std::set< int > importedItems;
-        int imageCount;
+    void processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, UserDataPtr &user_data);
+    std::set< int > importedItems;
+    int imageCount;
 public:
-	cProcessEpg();
-	~cProcessEpg();
-	cChannelMap *chanmap;
-	cDataMap *datamap;
-	int processFile(string confdir, char *filename);
-    void readMaps() ;
+    cProcessEpg();
+    ~cProcessEpg();
+    cChannelMap *chanmap;
+    cDataMap *datamap;
+    cGenreMap *genremap;
+    int processFile(string confdir, char *filename);
     string epgimagesdir ;     /* -i option */
     string procdir;           /* -p option */
     int    imgsize;           /* -s option */
@@ -108,6 +111,7 @@ public:
     string incdir;            /* -I option */
     string channelmapfile;    /* -c option */
     string imageformat;       /* -f option */
+    string genremapfile;      /* -g option */
 };
 
 #endif

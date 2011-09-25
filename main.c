@@ -9,6 +9,7 @@
 
 #define PROCDIR "/var/cache/epgdata2vdr/"
 #define CHANNELMAP "/etc/epgdata2vdr/channelmap.conf"
+#define GENREMAP "/etc/epgdata2vdr/genremap.conf"
 #define INCDIR "/var/cache/epgdata2vdr/include/"
 #define IMAGESIZE 120
 
@@ -22,6 +23,7 @@ void usage() {
     fprintf(stderr,"\t-s\t--image-size int\n\t\timage size the pictures will be resized to\n\t\t(Default: %d)\n\n",IMAGESIZE );
     fprintf(stderr,"\t-I\t--include-directory <directory>\n\t\tpath to the directory containing the content from the include file of epgdata.com\n\t\t(Default:%s)\n\n",INCDIR);
     fprintf(stderr,"\t-c\t--channel-map <filename>\n\t\tfilename with path where the file with mapping between epgdata channel and vdr is located\n\t\t(Default:%s)\n\n",CHANNELMAP);
+    fprintf(stderr,"\t-g\t--genre-map <filename>\n\t\tfilename with path where the file with mapping between epgdata genre and dvb-si genre for vdr is located\n\t\t(Default:%s)\n\n",GENREMAP);
     fprintf(stderr,"\t-f\t--image-format jpg|png\n\t\toutput format of the epgimages\n\n");
     fprintf(stderr,"\t-C\t--print-channels\n\t\tprint all mapped channels in noepgmenu format (channel id, space seperated)\n");
 }
@@ -38,6 +40,7 @@ static struct option long_options[] =
         { "channel-map", required_argument, NULL, 'c' },
         { "image-format", required_argument, NULL, 'f' },
         { "print-channels", no_argument, NULL, 'C' },
+        { "genre-map", required_argument, NULL, 'g' },
         { "help", no_argument, NULL, 'h' },
         {0, 0, 0, 0}
     };
@@ -55,7 +58,7 @@ int main(int argc, char *argv[])
     {
         int longIndex = 0;
 
-        if ((opt = getopt_long( argc, argv, "i:p:s:o:I:c:f:hC", long_options, &longIndex )) == -1) {
+        if ((opt = getopt_long( argc, argv, "i:p:s:o:I:c:f:g:hC", long_options, &longIndex )) == -1) {
             break;
         }
 
@@ -87,6 +90,11 @@ int main(int argc, char *argv[])
             case 'f':
                 process->imageformat = string(optarg);
                 break;
+
+            case 'g':
+                process->genremapfile = string(optarg);
+                break;
+
             case 'C':
                 printchan = true;
                 break;
@@ -103,6 +111,7 @@ int main(int argc, char *argv[])
     if ( process->incdir == "" )  process->incdir = INCDIR ;
     if ( process->procdir == "" ) process->procdir = PROCDIR ;
     if ( process->channelmapfile == "" ) process->channelmapfile = CHANNELMAP ;
+    if ( process->genremapfile == "" ) process->genremapfile = GENREMAP ;
     if ( process->imageformat == "" ) {
         if ( process->imgsize == 0 )  process->imageformat = "jpg";
                       else process->imageformat = "png";
@@ -113,6 +122,7 @@ int main(int argc, char *argv[])
     // read genre and category from includedir and channelmap.
     process->chanmap = new cChannelMap(process->channelmapfile);
     process->datamap = new cDataMap(process->incdir);
+    process->genremap = new cGenreMap(process->genremapfile);
 
     if (optind < argc) {
 

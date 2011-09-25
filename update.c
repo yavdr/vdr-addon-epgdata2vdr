@@ -170,8 +170,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
       else pud->themes = xmlCharStrdup("");
     }
     else if (!strcmp(name,"d25")) {
-       if (atol((char *)value)) pud->genre = cProcessEpg::datamap->GetStr(atol((char *)value));
-                 else pud->genre = string("");
+        if (atol((char *)value)) pud->genre_id = atol((char *)value);
     }
     else if (!strcmp(name,"d26")) {
       if ((xmlStrlen(value) != 0) && (atol((char *)value) != 0)) {
@@ -295,7 +294,7 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
             case 0: break;
             case 1: xmlTextWriterWriteFormatString(writer,"[Spartentipp %s] ",pud->category.c_str());
               break;
-            case 2: xmlTextWriterWriteFormatString(writer,"[Genretipp %s] ",pud->genre.c_str());
+            case 2: xmlTextWriterWriteFormatString(writer,"[Genretipp %s] ",cProcessEpg::datamap->GetStr(pud->genre_id).c_str());
               break;
             case 3: xmlTextWriterWriteFormatString(writer,"[Tagestipp] ");
               break;
@@ -313,8 +312,8 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
           xmlTextWriterWriteFormatString(writer,"|Kategorie: %s",pud->category.c_str());
         } 
 
-        if (pud->genre.size() > 0) {
-          xmlTextWriterWriteFormatString(writer,"|Genre: %s",pud->genre.c_str());
+        if (cProcessEpg::datamap->GetStr(pud->genre_id).size() > 0) {
+          xmlTextWriterWriteFormatString(writer,"|Genre: %s",cProcessEpg::datamap->GetStr(pud->genre_id).c_str());
         }
 
         if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"|Folge: %s",pud->sequence);
@@ -366,8 +365,18 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         if (xmlStrlen(pud->age_marker) > 0) xmlTextWriterWriteFormatString(writer,"R %s\n",pud->age_marker);
         
         // dvb-si genre
-        // TODO
-        
+        if (cProcessEpg::genremap->GetGenreCount(pud->genre_id) > 0) { 
+            xmlTextWriterWriteFormatString(writer,"G ");
+            for (pud->genreindex = 0; pud->genreindex < cProcessEpg::genremap->GetGenreCount(pud->genre_id); pud->genreindex++)
+            {
+                xmlTextWriterWriteFormatString(writer,"%s", cProcessEpg::genremap->GetGenreString(pud->genre_id, pud->genreindex) );
+                if ((pud->genreindex + 1) != cProcessEpg::genremap->GetGenreCount(pud->genre_id))
+                    xmlTextWriterWriteFormatString(writer," ");
+                else 
+                    xmlTextWriterWriteFormatString(writer,"\n");
+            }
+        }
+
         // stream information (X values)
         //
 
