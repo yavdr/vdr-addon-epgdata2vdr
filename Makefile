@@ -1,5 +1,6 @@
 
 USE_IMAGEMAGICK=1
+USEEXTENDEDEPGELEMENTS=1 
 
 ifdef USE_IMAGEMAGICK
 LIBS += $(shell Magick-config --ldflags --libs)
@@ -9,6 +10,9 @@ ifdef USE_IMAGEMAGICK
 DEFINES = -DUSE_IMAGEMAGICK $(shell Magick-config --cflags --cppflags)
 endif
 
+ifdef USEEXTENDEDEPGELEMENTS
+DEFINES += -DUSEEXTENDEDEPGELEMENTS
+endif
 
 all:	epgdata2vdr
 

@@ -380,13 +380,14 @@ void cProcessEpg::processNode(xmlTextReaderPtr reader, xmlTextWriterPtr writer, 
         // stream information (X values)
         //
 
-        // structured additional information
+#ifdef USEEXTENDEDEPGELEMENTS
+        // structured additional information (K values - experimental)
         if (xmlStrlen(pud->regisseur) > 0) xmlTextWriterWriteFormatString(writer,"K REGISSEUR %s\n",pud->regisseur);
         if (xmlStrlen(pud->actor) > 0) xmlTextWriterWriteFormatString(writer,"K ACTORS %s\n",pud->actor);
         if (xmlStrlen(pud->year) > 0) xmlTextWriterWriteFormatString(writer,"K YEAR %s\n",pud->year);
         if (xmlStrlen(pud->country) > 0) xmlTextWriterWriteFormatString(writer,"K COUNTRY %s\n",pud->country);
         if (xmlStrlen(pud->sequence) > 0) xmlTextWriterWriteFormatString(writer,"K SEQUENCE %s\n",pud->sequence);
-        
+#endif        
 
         // end event and channel
         xmlTextWriterWriteFormatString(writer,"e\n");
