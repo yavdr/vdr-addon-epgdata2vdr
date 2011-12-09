@@ -87,7 +87,7 @@ for i in `seq 0 $MAXDAYS` ; do
 				$EPGDATA2VDRBIN -c $CONF \
                                                 -I $WORKDIR/include/ \
                                                    $IMAGEOPT \
-                                                -p $WORKDIR \
+                                                -p ${WORKDIR}/ \
                                                 -f $IMAGE_FORMAT \
                                                 -s $IMAGE_MAXSIZE \
                                                    $WORKDIR/files/$FILE.zip
