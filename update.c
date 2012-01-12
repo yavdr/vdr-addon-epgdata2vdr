@@ -639,7 +639,7 @@ int cProcessEpg::processFile(string confdir , char *filename)
             xmlFreeTextWriter(writer);
             fprintf(stderr, "could not create file output for %s.\n", outfile.c_str());
         }
-        reader = xmlReaderForMemory(buffer, zstat.size,confdir.c_str() ,"iso-8859-1" , XML_PARSE_NOENT | XML_PARSE_DTDLOAD); // create the reader
+        reader = xmlReaderForMemory(buffer, zstat.size,confdir.c_str() ,NULL , XML_PARSE_NOENT | XML_PARSE_DTDLOAD); // create the reader
         if (reader != NULL) { // reader created successfull
             parseretval = xmlTextReaderRead(reader);
             while (parseretval == 1) {
